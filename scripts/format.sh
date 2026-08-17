@@ -51,16 +51,25 @@ if [ "${#files[@]}" -eq 0 ]; then
     exit 0
 fi
 
-case "$MODE" in
-    check)
-        clang-format --dry-run --Werror "${files[@]}"
-        ;;
-    fix)
-        clang-format -i "${files[@]}"
-        echo "formatted ${#files[@]} file(s)"
-        ;;
-    *)
-        echo "usage: format.sh <check|fix> [target...]" >&2
-        exit 1
-        ;;
-esac
+status=0
+total="${#files[@]}"
+i=0
+for f in "${files[@]}"; do
+    i=$((i + 1))
+    echo "[$i/$total] ${f#"$REPO_ROOT"/}"
+    case "$MODE" in
+        check)
+            clang-format --dry-run --Werror "$f" || status=1
+            ;;
+        fix)
+            clang-format -i "$f"
+            ;;
+        *)
+            echo "usage: format.sh <check|fix> [target...]" >&2
+            exit 1
+            ;;
+    esac
+done
+
+[ "$MODE" = "fix" ] && echo "formatted $total file(s)"
+exit "$status"

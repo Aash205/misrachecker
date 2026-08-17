@@ -30,9 +30,45 @@ remove_stale_compile_flags() {
     fi
 }
 
+# CubeIDE's own "directory" field is the project root, but every -I flag
+# in "command" is relative (e.g. -I../Core/Inc), written as if resolved
+# from the build-config dir (Debug/) one level below root -- that's the
+# actual cwd the compiler ran from. clang-tidy/clangd resolve relative -I
+# paths against "directory" per the compile_commands.json spec, so as
+# shipped every relative include resolves one level ABOVE the project and
+# silently fails to find any header (verified against a real CubeIDE
+# export). Patch "directory" to the real build dir so relative -I
+# resolution matches what the compiler actually saw.
+fix_directory_field() {
+    local json_file="$1" cfg_basename="$2"
+    python3 - "$json_file" "$cfg_basename" <<'PY'
+import json, sys
+
+path, cfg = sys.argv[1], sys.argv[2]
+with open(path) as f:
+    entries = json.load(f)
+
+suffix = "/" + cfg
+fixed = 0
+for e in entries:
+    d = e.get("directory", "").rstrip("/\\")
+    if not d.lower().endswith(suffix.lower()):
+        e["directory"] = d + suffix
+        fixed += 1
+
+if fixed:
+    with open(path, "w") as f:
+        json.dump(entries, f, indent=2)
+    print(f"Fixed 'directory' field in {fixed} entr{'y' if fixed == 1 else 'ies'} "
+          f"(CubeIDE wrote the project root instead of the build dir '{cfg}', "
+          "breaking every relative -I path).")
+PY
+}
+
 if [ -n "$NATIVE_JSON" ]; then
     echo "Found native compile_commands.json (CubeIDE CDT export) at $NATIVE_JSON"
     cp "$NATIVE_JSON" "$PROJECT_DIR/compile_commands.json"
+    fix_directory_field "$PROJECT_DIR/compile_commands.json" "$(basename "$(dirname "$NATIVE_JSON")")"
     remove_stale_compile_flags
     exit 0
 fi
