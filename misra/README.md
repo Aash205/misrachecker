@@ -49,8 +49,11 @@ addon. Everything else (exclusions, demo self-test) stays the same.
   after installing tools that shell out to the system PATH; restart CubeIDE after
   installing anything that changes it.
 - Updating an installed copy: `scripts/update.sh <target-repo>` re-syncs from this repo
-  without clobbering local changes — a file that differs from upstream gets a `.new`
-  sibling instead of being overwritten. `install.sh` is just this run on an empty target.
+  without clobbering local changes. `.vscode/*.json` files deep-merge in place (dicts
+  merge key-by-key, lists concat-dedupe, upstream wins scalar conflicts — needs
+  `python3`, already a hard dep via cppcheck's `misra.py` addon); any other file that
+  differs from upstream gets a `.new` sibling instead of being overwritten.
+  `install.sh` is just this run on an empty target.
 - Headers "not found" in clangd even with `compile_commands.json` present: clangd refuses
   to query an arbitrary compiler binary named in `compile_commands.json` for its implicit
   system-include paths (newlib/CMSIS headers like `stdint.h` live there) unless that binary
