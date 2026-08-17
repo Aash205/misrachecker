@@ -84,7 +84,14 @@ c_files=()
 collect_files c_files c -- "${targets[@]}"
 
 if [ "${#c_files[@]}" -gt 0 ]; then
+    # --platform=unix32: STM32/Cortex-M is 32-bit (4-byte long/pointer).
+    # Without this, cppcheck defaults to the host's own type sizes (64-bit
+    # long/pointer on most dev machines), which silently misses real bugs
+    # -- e.g. `1L << 31` is fine with a 64-bit long but undefined behavior
+    # with a 32-bit one. unix32 is the closest built-in match; cppcheck has
+    # no dedicated Cortex-M/ARM platform.
     if ! cppcheck --enable=all --inconclusive --addon=misra.py \
+        --platform=unix32 \
         --error-exitcode=1 --suppressions-list="$SUPPRESSIONS_FILE" \
         --inline-suppr "${c_files[@]}"; then
         status=1

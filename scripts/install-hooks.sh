@@ -17,6 +17,14 @@ if ! command -v pre-commit >/dev/null 2>&1; then
     fi
 fi
 
+if ! command -v pre-commit >/dev/null 2>&1; then
+    echo "ERROR: pre-commit was just installed but isn't on PATH in this session yet." >&2
+    echo "This is the same PATH-staleness issue as other freshly-installed tools --" >&2
+    echo "close and reopen your terminal (or restart VSCode), then re-run:" >&2
+    echo "  ./scripts/install-hooks.sh" >&2
+    exit 1
+fi
+
 pre-commit install
 
 echo "Pre-commit hooks installed."
