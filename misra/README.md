@@ -76,6 +76,32 @@ addon. Everything else (exclusions, demo self-test) stays the same.
   commonly assumed precedence. `gen_compile_commands.sh` deletes `compile_flags.txt` once it
   writes a real `compile_commands.json`, so this never comes up in normal use; it only
   matters if you're debugging why lint results don't seem to reflect the real project.
+- CubeIDE's native `compile_commands.json` export sets `"directory"` to the project root, but
+  every `-I` flag in `"command"` is relative and was written assuming cwd = the build-config
+  dir (`Debug/`) one level below root — that's where the compiler actually ran from.
+  clang-tidy/clangd resolve relative `-I` paths against `"directory"` per spec, so as
+  exported every relative include silently resolves one level *above* the project and never
+  finds a header (verified against a real export). `gen_compile_commands.sh` patches
+  `"directory"` to the real build-config folder on every copy — this is automatic, not
+  something you need to touch, but explains why a hand-copied CubeIDE export (bypassing
+  `gen_compile_commands.sh`) will still show nested/standard-library-style header errors.
+- `cppcheck --addon=misra.py` bare-name resolution (cwd, then a folder next to cppcheck's own
+  exe) can fail on Windows: winget's Cppcheck installs to `Program Files`, but `PATH` often
+  resolves `cppcheck` through an App Execution Alias reparse stub, which breaks the
+  exe-relative `addons/` lookup even though the real addon file is sitting right there.
+  `lint.sh` resolves the real path itself (`resolve_misra_addon`, checked against common
+  Linux/macOS/Windows install locations) and passes it explicitly instead of trusting the
+  bare name.
+- `lint.sh` exit codes: `0` clean, `1` real lint findings, `2` the toolchain itself is broken
+  (e.g. `misra.py` addon not found) — kept distinct from `1` so a CubeIDE post-build failure
+  caused by a misconfigured tool doesn't look identical to one caused by a real MISRA
+  violation. cppcheck's own output is scanned for known config-error strings to tell them
+  apart, since cppcheck returns the same exit code for both.
+- `.clang-tidy`'s `HeaderFilterRegex` is `''` (clang-tidy's real default), not `'.*'` — `'.*'`
+  makes clang-tidy also diagnose every transitively-included header (CMSIS, HAL, standard
+  library), none of which this project owns or can fix. Empty restricts diagnostics to only
+  the exact file passed on the command line; `.hpp` files are still linted since `lint.sh`
+  scans them directly as their own targets.
 
 ## Showing findings in CubeIDE's own Problems view (no plugin)
 
