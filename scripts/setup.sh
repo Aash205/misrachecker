@@ -27,9 +27,14 @@ case "$(uname -s)" in
             echo "  https://cppcheck.sourceforge.io/  and  https://releases.llvm.org/" >&2
             exit 1
         }
-        winget install --id Cppcheck.Cppcheck -e --accept-source-agreements --accept-package-agreements
-        winget install --id LLVM.LLVM -e --accept-source-agreements --accept-package-agreements
-        command -v uv >/dev/null 2>&1 || winget install --id astral-sh.uv -e --accept-source-agreements --accept-package-agreements
+        # winget exits non-zero for an already-installed package, which would
+        # kill the rest of this script under set -e -- skip the call entirely
+        # when the tool is already on PATH, and tolerate winget's own exit
+        # code otherwise so a real failure doesn't abort remaining installs
+        # either (check-tools.sh at the end reports anything still missing).
+        command -v cppcheck >/dev/null 2>&1 || winget install --id Cppcheck.Cppcheck -e --accept-source-agreements --accept-package-agreements || true
+        command -v clang-tidy >/dev/null 2>&1 || winget install --id LLVM.LLVM -e --accept-source-agreements --accept-package-agreements || true
+        command -v uv >/dev/null 2>&1 || winget install --id astral-sh.uv -e --accept-source-agreements --accept-package-agreements || true
         ;;
     *)
         echo "Unsupported OS: $(uname -s)" >&2
