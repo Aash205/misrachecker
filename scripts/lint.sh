@@ -16,6 +16,20 @@ if [ "${1:-}" = "--fix" ]; then
     shift
 fi
 
+# --cubeide: force cppcheck's output into GCC "warning:" format so
+# STM32CubeIDE's built-in GNU Error Parser (no plugin) turns findings into
+# real Problems-view markers when this is run as a C/C++ Build > Settings >
+# Build Steps > post-build step. Eclipse CDT's parser only recognizes
+# warning/error/note/info/remark -- cppcheck's own severities (style,
+# performance, portability) don't match and get silently dropped otherwise.
+# clang-tidy's C++ output already matches (WarningsAsErrors in .clang-tidy
+# makes it print "error:"), so only cppcheck's template needs to change.
+CUBEIDE=0
+if [ "${1:-}" = "--cubeide" ]; then
+    CUBEIDE=1
+    shift
+fi
+
 if [ "$#" -eq 0 ]; then
     targets=("$REPO_ROOT")
 else
@@ -95,10 +109,14 @@ if [ "${#c_files[@]}" -gt 0 ]; then
     # consistent across OSes/package managers; verified against this
     # exact target's own compiler macros (__SIZEOF_WCHAR_T__=4,
     # __CHAR_UNSIGNED__=1).
+    template_args=()
+    if [ "$CUBEIDE" -eq 1 ]; then
+        template_args=(--template='{file}:{line}:{column}: warning: {message} [{id}]')
+    fi
     if ! cppcheck --enable=all --inconclusive --addon=misra.py \
         --platform="$CPPCHECK_PLATFORM" \
         --error-exitcode=1 --suppressions-list="$SUPPRESSIONS_FILE" \
-        --inline-suppr "${c_files[@]}"; then
+        --inline-suppr "${template_args[@]}" "${c_files[@]}"; then
         status=1
     fi
 else
