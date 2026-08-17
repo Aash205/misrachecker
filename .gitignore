@@ -17,3 +17,6 @@ compile_flags.txt
 Debug/
 Release/
 .metadata/
+
+# Python venv used to bootstrap pre-commit
+.venv/
