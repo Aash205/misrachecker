@@ -45,3 +45,10 @@ addon. Everything else (exclusions, demo self-test) stays the same.
 - Updating an installed copy: `scripts/update.sh <target-repo>` re-syncs from this repo
   without clobbering local changes — a file that differs from upstream gets a `.new`
   sibling instead of being overwritten. `install.sh` is just this run on an empty target.
+- Headers "not found" in clangd even with `compile_commands.json` present: clangd refuses
+  to query an arbitrary compiler binary named in `compile_commands.json` for its implicit
+  system-include paths (newlib/CMSIS headers like `stdint.h` live there) unless that binary
+  is explicitly whitelisted. `.vscode/settings.json` sets
+  `--query-driver=**/arm-none-eabi-*` to allow it — without this flag, clangd falls back to
+  its own bundled Clang headers, which don't match the ARM toolchain's. Restart the clangd
+  language server after this changes (Command Palette → `clangd: Restart language server`).

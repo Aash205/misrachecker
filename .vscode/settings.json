@@ -1,7 +1,8 @@
 {
     "clangd.arguments": [
         "--clang-tidy",
-        "--header-insertion=never"
+        "--header-insertion=never",
+        "--query-driver=**/arm-none-eabi-*"
     ],
     "C_Cpp.intelliSenseEngine": "disabled",
     "terminal.integrated.defaultProfile.windows": "Git Bash"
