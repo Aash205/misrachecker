@@ -10,6 +10,38 @@ SUPPRESSIONS_FILE="$MISRA_DIR/suppressions.txt"
 CLANG_TIDY_CONFIG="$REPO_ROOT/.clang-tidy"
 CPPCHECK_PLATFORM="$MISRA_DIR/arm32-wchar_t4.xml"
 
+# cppcheck's own bare `--addon=misra.py` resolution (cwd, then a folder
+# next to its own exe) can fail on Windows: winget's Cppcheck installs to
+# Program Files, but PATH often resolves `cppcheck` through an App
+# Execution Alias reparse stub, which breaks the exe-relative addons/
+# lookup even though the real addon file is right there on disk. Resolve
+# it ourselves and pass a full path instead of trusting the bare name.
+resolve_misra_addon() {
+    local exe_dir candidates=()
+    if exe_dir="$(command -v cppcheck 2>/dev/null)"; then
+        exe_dir="$(dirname "$exe_dir")"
+        candidates+=("$exe_dir/addons/misra.py")
+    fi
+    candidates+=(
+        "/usr/share/cppcheck/addons/misra.py"
+        "/usr/local/share/cppcheck/addons/misra.py"
+        "/opt/homebrew/share/cppcheck/addons/misra.py"
+        "/c/Program Files/Cppcheck/addons/misra.py"
+        "C:/Program Files/Cppcheck/addons/misra.py"
+        "/c/Program Files (x86)/Cppcheck/addons/misra.py"
+    )
+    local c
+    for c in "${candidates[@]}"; do
+        [ -f "$c" ] && { printf '%s' "$c"; return 0; }
+    done
+    return 1
+}
+
+MISRA_ADDON="misra.py"
+if resolved_addon="$(resolve_misra_addon)"; then
+    MISRA_ADDON="$resolved_addon"
+fi
+
 FIX=0
 if [ "${1:-}" = "--fix" ]; then
     FIX=1
@@ -119,7 +151,7 @@ if [ "${#c_files[@]}" -gt 0 ]; then
     if [ "$CUBEIDE" -eq 1 ]; then
         template_args=(--template='{file}:{line}:{column}: warning: {message} [{id}]')
     fi
-    if ! cppcheck --enable=all --inconclusive --addon=misra.py \
+    if ! cppcheck --enable=all --inconclusive --addon="$MISRA_ADDON" \
         --platform="$CPPCHECK_PLATFORM" \
         --suppress=missingIncludeSystem --suppress=checkersReport \
         --error-exitcode=1 --suppressions-list="$SUPPRESSIONS_FILE" \
