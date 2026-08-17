@@ -5,6 +5,7 @@ docs/superpowers/
 .cppcheck-build-dir/
 .cache/
 *.tidy-cache
+*.dump
 
 # Generated compile database / clangd fallback flags (machine-specific --
 # paths depend on the local ARM toolchain's exact version/install location,
