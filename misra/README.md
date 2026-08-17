@@ -104,17 +104,20 @@ addon. Everything else (exclusions, demo self-test) stays the same.
   is already a hard dependency (it bootstraps pre-commit) and manages its own Python
   independent of system `PATH`, so it works even on a Windows machine with no bare
   `python3`/`python` on `PATH` at all.
-- cppcheck's C pass now uses `--project=compile_commands.json` when one exists, giving it real
-  per-file `-I`/`-D` flags from the actual CubeIDE build instead of none at all — without this,
-  cppcheck can't resolve a single one of the project's own headers (`"FreeRTOS.h"`, `"main.h"`,
-  ...) and spams `missingInclude` for every file, which also fails the build since those count
-  toward `--error-exitcode=1`. `--file-filter` restricts analysis to just the already
-  exclude-paths-filtered target files (`--project` alone would also pull in every compiled
-  HAL/CMSIS/Middlewares file). Any target file not actually present in `compile_commands.json`
-  (added since the last build, say) runs in a separate plain pass instead of hard-erroring the
-  whole run — that pass falls back to whatever `-I`/`-D` flags it can pull out of
-  `compile_flags.txt`, since cppcheck has no native concept of that file and errors on most of
-  its other flags (`--target=`, `-mcpu=`, ...) if forwarded as-is.
+- cppcheck's C pass extracts real `-I`/`-D` flags from `compile_commands.json` when one exists
+  (one representative entry's flags, applied to every target file in a single invocation —
+  STM32CubeIDE projects use one global include/define set across all project files, verified
+  against a real export) instead of none at all — without this, cppcheck can't resolve a single
+  one of the project's own headers (`"FreeRTOS.h"`, `"main.h"`, ...) and spams `missingInclude`
+  for every file, which also fails the build since those count toward `--error-exitcode=1`.
+  This does its own flag extraction rather than using cppcheck's own `--project=`/
+  `--file-filter=` — that was tried first, but verified against a real STM32CubeIDE run that
+  cppcheck's native Windows exe can reject every `--file-filter` with `could not find any files
+  matching the filter` even when the filter path is byte-for-byte identical to the database's
+  own `"file"` entry, a project-loader quirk with no visibility from outside cppcheck itself.
+  Falls back to whatever `-I`/`-D` flags it can pull out of `compile_flags.txt` when there's no
+  `compile_commands.json` at all, since cppcheck has no native concept of that file and errors
+  on most of its other flags (`--target=`, `-mcpu=`, ...) if forwarded as-is.
 - `lint.sh` exit codes: `0` clean, `1` real lint findings, `2` the toolchain itself is broken
   (e.g. `misra.py` addon not found) — kept distinct from `1` so a CubeIDE post-build failure
   caused by a misconfigured tool doesn't look identical to one caused by a real MISRA

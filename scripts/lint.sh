@@ -224,106 +224,99 @@ if [ "${#c_files[@]}" -gt 0 ]; then
         template_args=(--template='{file}:{line}:{column}: warning: {message} [{id}]')
     fi
 
-    # Without --project, cppcheck gets zero -I paths and can't resolve a
-    # single one of the project's own headers ("FreeRTOS.h", "main.h", ...)
-    # -- verified against a real CubeIDE build, every file spammed
-    # missingInclude and failed the build over headers cppcheck was never
-    # told where to find. --project=compile_commands.json (when
-    # gen_compile_commands.sh has produced one) gives cppcheck the real
-    # per-file -I/-D flags from the actual build.
+    # Without extra -I/-D flags, cppcheck can't resolve a single one of the
+    # project's own headers ("FreeRTOS.h", "main.h", ...) -- verified
+    # against a real CubeIDE build, every file spammed missingInclude and
+    # failed the build over headers cppcheck was never told where to find.
     #
-    # Not every c_files entry is guaranteed to be IN that compile database
-    # though (a file added since the last CubeIDE build, or -- as seen
-    # while testing this against this repo's own demo/ self-test with an
-    # unrelated sample compile_commands.json sitting at the root --
-    # completely unrelated files). --file-filter for a file --project
-    # doesn't know about is a hard "could not find any files matching the
-    # filter" error, verified directly, so partition into files the
-    # database actually covers (run via --project + --file-filter, for
-    # accurate include resolution) and files it doesn't (run plain, same
-    # as when there's no compile_commands.json at all) rather than letting
-    # one uncovered file kill the entire run.
-    matched_files=()
+    # Tried cppcheck's own --project=compile_commands.json + --file-filter
+    # first, but verified against a real STM32CubeIDE run that cppcheck's
+    # native Windows exe can reject every --file-filter with "could not
+    # find any files matching the filter" even when the filter path is
+    # byte-for-byte identical to the database's own "file" entry -- a
+    # project-loader quirk this toolchain has no visibility into and can't
+    # fix from the outside. So: extract the real -I/-D flags ourselves
+    # (same technique as the compile_flags.txt fallback below) from one
+    # representative compile_commands.json entry and apply them to every
+    # target file in one plain invocation, same as compile_flags.txt.
+    # STM32CubeIDE projects use one global include/define set across all
+    # project files (verified against a real export), so one entry's flags
+    # generalize fine -- this sidesteps --project/--file-filter entirely
+    # rather than depending on cppcheck's own project-file matching.
+    extra_include_args=()
     if [ -f "$REPO_ROOT/compile_commands.json" ]; then
-        while IFS= read -r f; do
-            matched_files+=("$f")
-        done < <(python3 - "$REPO_ROOT/compile_commands.json" "${c_files[@]}" <<'PY'
-import json, sys
+        while IFS= read -r flag; do
+            extra_include_args+=("$flag")
+        done < <(python3 - "$REPO_ROOT/compile_commands.json" <<'PY'
+import json, shlex, sys
 
-db_path, targets = sys.argv[1], sys.argv[2:]
-with open(db_path) as f:
+with open(sys.argv[1]) as f:
     entries = json.load(f)
-db_files = {e.get("file", "").replace("\\", "/") for e in entries}
-for t in targets:
-    t_norm = t.replace("\\", "/")
-    if any(f.endswith(t_norm) or t_norm.endswith(f) for f in db_files):
-        print(t)
+if not entries:
+    sys.exit(0)
+entry = entries[0]
+directory = entry.get("directory", "").replace("\\", "/").rstrip("/")
+tokens = entry.get("arguments") or shlex.split(entry.get("command", ""))
+
+def resolve(path):
+    path = path.replace("\\", "/")
+    if path.startswith("/") or (len(path) > 1 and path[1] == ":"):
+        return path
+    return directory + "/" + path
+
+seen = set()
+i = 0
+while i < len(tokens):
+    tok = tokens[i]
+    flag = None
+    if tok.startswith("-I") and len(tok) > 2:
+        flag = "-I" + resolve(tok[2:])
+    elif tok in ("-I", "-isystem") and i + 1 < len(tokens):
+        flag = "-I" + resolve(tokens[i + 1])
+        i += 1
+    elif tok.startswith("-D"):
+        flag = tok
+    if flag is not None and flag not in seen:
+        seen.add(flag)
+        print(flag)
+    i += 1
 PY
         )
-    fi
-
-    unmatched_files=()
-    for f in "${c_files[@]}"; do
-        is_matched=0
-        for m in "${matched_files[@]}"; do
-            [ "$f" = "$m" ] && { is_matched=1; break; }
-        done
-        [ "$is_matched" -eq 0 ] && unmatched_files+=("$f")
-    done
-
-    # compile_flags.txt fallback (unmatched/no-db files only): cppcheck has
-    # no native concept of this file (unlike clang-tidy/clangd, which read
-    # it via -p). It also only tolerates -I<dir> and -D<ID> -- anything
-    # else in there (--target=, -mcpu=, -mthumb, ...) is a hard
-    # "unrecognized command line option" error for cppcheck, verified
-    # directly. So pull out just the include paths (-isystem <dir> pairs
-    # count as -I too; cppcheck doesn't distinguish system vs quote
-    # includes) and drop everything else rather than forwarding as-is.
-    fallback_include_args=()
-    if [ "${#unmatched_files[@]}" -gt 0 ] && [ -f "$REPO_ROOT/compile_flags.txt" ]; then
+    elif [ -f "$REPO_ROOT/compile_flags.txt" ]; then
+        # compile_flags.txt fallback: cppcheck has no native concept of this
+        # file (unlike clang-tidy/clangd, which read it via -p). It also
+        # only tolerates -I<dir> and -D<ID> -- anything else in there
+        # (--target=, -mcpu=, -mthumb, ...) is a hard "unrecognized command
+        # line option" error for cppcheck, verified directly. So pull out
+        # just the include paths (-isystem <dir> pairs count as -I too;
+        # cppcheck doesn't distinguish system vs quote includes) and drop
+        # everything else rather than forwarding the file as-is.
         prev_flag=""
         while IFS= read -r flag; do
             case "$prev_flag" in
-                -isystem) fallback_include_args+=("-I$flag") ;;
+                -isystem) extra_include_args+=("-I$flag") ;;
             esac
             case "$flag" in
-                -I*) fallback_include_args+=("$flag") ;;
-                -D*) fallback_include_args+=("$flag") ;;
+                -I*) extra_include_args+=("$flag") ;;
+                -D*) extra_include_args+=("$flag") ;;
             esac
             prev_flag="$flag"
         done < "$REPO_ROOT/compile_flags.txt"
     fi
 
     cppcheck_log="$(mktemp)"
-    cppcheck_rc=0
-    # set +e around each pipeline, not `|| true` after it: under pipefail, a
+    # set +e around the pipeline, not `|| true` after it: under pipefail, a
     # failing pipeline followed by `|| true` runs `true` as its own trivial
     # pipeline, which clobbers PIPESTATUS before the next line can read it
     # (verified: PIPESTATUS collapses to just true's "0"). Disabling -e
     # instead lets the real per-stage PIPESTATUS survive to the next line.
     set +e
-    if [ "${#matched_files[@]}" -gt 0 ]; then
-        file_filter_args=()
-        for f in "${matched_files[@]}"; do
-            file_filter_args+=(--file-filter="$f")
-        done
-        cppcheck --enable=all --inconclusive --addon="$MISRA_ADDON" "${ADDON_PYTHON_ARGS[@]}" \
-            --platform="$CPPCHECK_PLATFORM" \
-            --suppress=missingIncludeSystem --suppress=checkersReport \
-            --error-exitcode=1 --suppressions-list="$SUPPRESSIONS_FILE" \
-            --inline-suppr "${template_args[@]}" \
-            --project="$REPO_ROOT/compile_commands.json" "${file_filter_args[@]}" 2>&1 | tee -a "$cppcheck_log"
-        [ "${PIPESTATUS[0]}" -ne 0 ] && cppcheck_rc=1
-    fi
-    if [ "${#unmatched_files[@]}" -gt 0 ]; then
-        cppcheck --enable=all --inconclusive --addon="$MISRA_ADDON" "${ADDON_PYTHON_ARGS[@]}" \
-            --platform="$CPPCHECK_PLATFORM" \
-            --suppress=missingIncludeSystem --suppress=checkersReport \
-            --error-exitcode=1 --suppressions-list="$SUPPRESSIONS_FILE" \
-            --inline-suppr "${template_args[@]}" \
-            "${fallback_include_args[@]}" "${unmatched_files[@]}" 2>&1 | tee -a "$cppcheck_log"
-        [ "${PIPESTATUS[0]}" -ne 0 ] && cppcheck_rc=1
-    fi
+    cppcheck --enable=all --inconclusive --addon="$MISRA_ADDON" "${ADDON_PYTHON_ARGS[@]}" \
+        --platform="$CPPCHECK_PLATFORM" \
+        --suppress=missingIncludeSystem --suppress=checkersReport \
+        --error-exitcode=1 --suppressions-list="$SUPPRESSIONS_FILE" \
+        --inline-suppr "${template_args[@]}" "${extra_include_args[@]}" "${c_files[@]}" 2>&1 | tee "$cppcheck_log"
+    cppcheck_rc="${PIPESTATUS[0]}"
     set -e
 
     # Config-error patterns are cppcheck telling us IT is broken, not that
