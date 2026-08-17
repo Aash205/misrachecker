@@ -1,5 +1,7 @@
 # insuflo_misra_toolchain
 
+[![MISRA lint](https://github.com/Aash205/misrachecker/actions/workflows/misra-lint.yml/badge.svg)](https://github.com/Aash205/misrachecker/actions/workflows/misra-lint.yml)
+
 MISRA-flavored lint toolchain for STM32CubeIDE firmware projects. Tooling only, no firmware
 source. Compilation stays exclusively in STM32CubeIDE; this adds linting, formatting, and
 pre-commit checks in VSCode, the terminal, and CI.
@@ -10,7 +12,7 @@ pre-commit checks in VSCode, the terminal, and CI.
 - Best-effort MISRA-C++-flavored linting (clang-tidy, **not certified**) on hand-written `.cpp`/`.hpp`
 - clang-format (Allman, 4-space) + pre-commit hooks that auto-format and lint staged files
 - Vendor/generated code (`generated/`, HAL, CMSIS, Middlewares) fully excluded
-- VSCode integration (clangd + Cppcheck extensions) and lint-only CI (Linux + Windows)
+- VSCode integration (clangd + Cppcheck extensions) and lint-only CI
 - Windows via Git Bash (ships with Git for Windows)
 
 ## Setup (one shot — Linux, macOS, or Windows via Git Bash)
