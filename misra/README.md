@@ -29,6 +29,13 @@ addon. Everything else (exclusions, demo self-test) stays the same.
   `scripts/setup.sh` (bootstraps `pre-commit` via `uv` or `pip`).
 - Windows: needs Git Bash. `bear` is optional there — use CubeIDE's native
   `compile_commands.json` export instead.
+- Windows PATH staleness: `setup.sh` installs tools via winget, but Windows only refreshes
+  PATH for *new* processes — an already-open terminal or VSCode window won't see them.
+  Close and reopen Git Bash (and restart VSCode) **before** opening the folder, so the
+  folder-open "Check tools installed" task doesn't falsely report them as missing. This
+  applies to STM32CubeIDE too — it's Eclipse-based and has the same stale-PATH problem
+  after installing tools/plugins that shell out to the system PATH; restart CubeIDE after
+  installing anything that changes it (e.g. cppcheclipse below).
 - Updating an installed copy: `scripts/update.sh <target-repo>` re-syncs from this repo
   without clobbering local changes — a file that differs from upstream gets a `.new`
   sibling instead of being overwritten. `install.sh` is just this run on an empty target.

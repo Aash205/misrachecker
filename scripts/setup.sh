@@ -47,4 +47,4 @@ esac
 echo ""
 "$SCRIPT_DIR/check-tools.sh"
 echo ""
-echo "Setup complete. Try: ./scripts/lint.sh demo"
+echo "Setup complete. Run ./scripts/lint.sh to lint this repo's source."
