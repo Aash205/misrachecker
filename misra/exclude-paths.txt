@@ -5,3 +5,15 @@
 */Drivers/*HAL_Driver/*
 */CMSIS/*
 */Middlewares/*
+
+# Non-firmware dirs that can end up under the repo root (Python venvs used
+# to bootstrap pre-commit, VCS internals, build output) -- these aren't
+# project source, but format.sh/lint.sh default to scanning the whole repo
+# when no target is given, so they get swept in unless excluded explicitly.
+*/.venv/*
+*/venv/*
+*/.git/*
+*/Debug/*
+*/Release/*
+*/.metadata/*
+*/node_modules/*
