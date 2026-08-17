@@ -73,3 +73,25 @@ addon. Everything else (exclusions, demo self-test) stays the same.
   commonly assumed precedence. `gen_compile_commands.sh` deletes `compile_flags.txt` once it
   writes a real `compile_commands.json`, so this never comes up in normal use; it only
   matters if you're debugging why lint results don't seem to reflect the real project.
+
+## Showing findings in CubeIDE's own Problems view (no plugin)
+
+Eclipse CDT has a built-in mechanism for exactly this: its GNU Error Parser scans the build
+console for `file:line:col: severity: message` lines and turns them into Problems-view
+markers — but only for `warning`/`error`/`note`/`info`/`remark`, not cppcheck's own
+`style`/`performance`/`portability` severities (which most MISRA findings use, and would
+otherwise be silently dropped). `scripts/lint.sh --cubeide` forces cppcheck's output into
+`warning:` format for exactly this; clang-tidy's already matches (`WarningsAsErrors` in
+`.clang-tidy` makes it print `error:`).
+
+Setup: Project Properties → C/C++ Build → Settings → **Build Steps** tab → Post-build steps
+command:
+```
+"C:\Program Files\Git\bin\bash.exe" "${ProjDirPath}/scripts/lint.sh" --cubeide "${ProjDirPath}"
+```
+(Linux/macOS: drop the `bash.exe` part, just `"${ProjDirPath}/scripts/lint.sh" --cubeide "${ProjDirPath}"`.)
+Confirm the GNU C/C++ Error Parser is enabled under the **Error Parsers** tab (on by default
+for managed-build projects). Findings then appear as build warnings/errors after every
+build. Note this runs *after* compilation, so a lint finding doesn't block getting a
+binary — it just flags the build with an error/warning indicator, same fail-loud behavior
+as the rest of this toolchain.
