@@ -19,4 +19,11 @@ jobs:
       - name: Make scripts executable
         run: chmod +x scripts/*.sh
 
-      - uses: pre-commit/action@v3.0.1
+      - name: Install uv and pre-commit
+        run: |
+          curl -LsSf https://astral.sh/uv/install.sh | sh
+          uv tool install pre-commit
+          echo "$HOME/.local/bin" >> "$GITHUB_PATH"
+
+      - name: Run pre-commit (format + MISRA lint)
+        run: pre-commit run --all-files
