@@ -109,12 +109,19 @@ if [ "${#c_files[@]}" -gt 0 ]; then
     # consistent across OSes/package managers; verified against this
     # exact target's own compiler macros (__SIZEOF_WCHAR_T__=4,
     # __CHAR_UNSIGNED__=1).
+    # missingIncludeSystem/checkersReport are cppcheck's own tool tips, not
+    # findings (cppcheck says so itself: "Standard library headers do not
+    # need to be provided"). Harmless as terminal noise, but --cubeide forces
+    # every line's severity to "warning:" for CDT's parser -- without
+    # suppressing these, they'd show up looking exactly like real "header
+    # not found" problems in CubeIDE's Problems view.
     template_args=()
     if [ "$CUBEIDE" -eq 1 ]; then
         template_args=(--template='{file}:{line}:{column}: warning: {message} [{id}]')
     fi
     if ! cppcheck --enable=all --inconclusive --addon=misra.py \
         --platform="$CPPCHECK_PLATFORM" \
+        --suppress=missingIncludeSystem --suppress=checkersReport \
         --error-exitcode=1 --suppressions-list="$SUPPRESSIONS_FILE" \
         --inline-suppr "${template_args[@]}" "${c_files[@]}"; then
         status=1
