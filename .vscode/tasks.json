@@ -3,7 +3,7 @@
     "tasks": [
         {
             "label": "MISRA: Check tools installed",
-            "type": "shell",
+            "type": "process",
             "command": "${workspaceFolder}/scripts/check-tools.sh",
             "windows": {
                 "command": "C:\\Program Files\\Git\\bin\\bash.exe",
@@ -15,7 +15,7 @@
         },
         {
             "label": "MISRA: Lint",
-            "type": "shell",
+            "type": "process",
             "command": "${workspaceFolder}/scripts/lint.sh",
             "windows": {
                 "command": "C:\\Program Files\\Git\\bin\\bash.exe",
@@ -26,7 +26,7 @@
         },
         {
             "label": "MISRA: Format fix",
-            "type": "shell",
+            "type": "process",
             "command": "${workspaceFolder}/scripts/format.sh",
             "args": ["fix"],
             "windows": {
@@ -37,7 +37,7 @@
         },
         {
             "label": "MISRA: Install pre-commit hooks",
-            "type": "shell",
+            "type": "process",
             "command": "${workspaceFolder}/scripts/install-hooks.sh",
             "windows": {
                 "command": "C:\\Program Files\\Git\\bin\\bash.exe",
@@ -47,7 +47,7 @@
         },
         {
             "label": "MISRA: Regen compile_commands.json",
-            "type": "shell",
+            "type": "process",
             "command": "${workspaceFolder}/scripts/gen_compile_commands.sh",
             "args": ["${input:cubeideProjectDir}"],
             "windows": {
