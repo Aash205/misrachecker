@@ -20,3 +20,8 @@ Release/
 
 # Python venv used to bootstrap pre-commit
 .venv/
+
+# lint.sh's self-downloaded misra.py fallback (used when no local cppcheck
+# install ships a working addons/ folder) -- fetched from cppcheck's own
+# upstream repo, not something to commit
+misra/vendor-addons/

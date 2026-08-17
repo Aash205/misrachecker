@@ -29,6 +29,7 @@ resolve_misra_addon() {
         "/c/Program Files/Cppcheck/addons/misra.py"
         "C:/Program Files/Cppcheck/addons/misra.py"
         "/c/Program Files (x86)/Cppcheck/addons/misra.py"
+        "$MISRA_DIR/vendor-addons/misra.py"
     )
     local c
     for c in "${candidates[@]}"; do
@@ -37,9 +38,35 @@ resolve_misra_addon() {
     return 1
 }
 
+# Last resort: some cppcheck Windows installs genuinely don't ship a
+# working addons/ folder at all -- a known upstream issue (misra.py
+# installed without its misra_9.py dependency, or the folder missing
+# entirely on some MSI/winget installs). Rather than fail, self-heal by
+# fetching misra.py + its misra_9.py dependency from cppcheck's own
+# upstream repo into a local, gitignored cache. Best-effort: needs curl
+# and network access; if either is unavailable this just falls through
+# to the same error as before.
+download_misra_addon() {
+    local dest_dir="$MISRA_DIR/vendor-addons"
+    local base="https://raw.githubusercontent.com/danmar/cppcheck/main/addons"
+    command -v curl >/dev/null 2>&1 || return 1
+    mkdir -p "$dest_dir"
+    if curl -fsSL "$base/misra.py" -o "$dest_dir/misra.py" 2>/dev/null \
+        && curl -fsSL "$base/misra_9.py" -o "$dest_dir/misra_9.py" 2>/dev/null; then
+        printf '%s' "$dest_dir/misra.py"
+        return 0
+    fi
+    rm -f "$dest_dir/misra.py" "$dest_dir/misra_9.py"
+    return 1
+}
+
 MISRA_ADDON="misra.py"
 if resolved_addon="$(resolve_misra_addon)"; then
     MISRA_ADDON="$resolved_addon"
+elif downloaded_addon="$(download_misra_addon)"; then
+    echo "misra.py addon not found in any local cppcheck install (known issue on some" >&2
+    echo "Windows installs) -- downloaded a copy to $MISRA_DIR/vendor-addons/." >&2
+    MISRA_ADDON="$downloaded_addon"
 fi
 
 FIX=0
