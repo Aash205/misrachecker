@@ -34,12 +34,8 @@ addon. Everything else (exclusions, demo self-test) stays the same.
   Close and reopen Git Bash (and restart VSCode) **before** opening the folder, so the
   folder-open "Check tools installed" task doesn't falsely report them as missing. This
   applies to STM32CubeIDE too — it's Eclipse-based and has the same stale-PATH problem
-  after installing tools/plugins that shell out to the system PATH; restart CubeIDE after
-  installing anything that changes it (e.g. cppcheclipse below).
+  after installing tools that shell out to the system PATH; restart CubeIDE after
+  installing anything that changes it.
 - Updating an installed copy: `scripts/update.sh <target-repo>` re-syncs from this repo
   without clobbering local changes — a file that differs from upstream gets a `.new`
   sibling instead of being overwritten. `install.sh` is just this run on an empty target.
-- Optional: install [cppcheclipse](https://github.com/cppchecksolutions/cppcheclipse) in
-  CubeIDE itself (Eclipse Marketplace) and point it at `--addon=misra.py` — same cppcheck
-  binary, same MISRA-C findings, shown in CubeIDE's own Problems view during build. No
-  equivalent plugin exists for clang-format or clang-tidy in CubeIDE right now.
