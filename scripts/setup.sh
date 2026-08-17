@@ -20,13 +20,16 @@ case "$(uname -s)" in
         install_uv_if_missing
         ;;
     MINGW* | MSYS* | CYGWIN*)
-        echo "Installing tools via choco (Windows)..."
-        command -v choco >/dev/null 2>&1 || {
-            echo "ERROR: choco not found. Install Chocolatey first: https://chocolatey.org/install" >&2
+        echo "Installing tools via winget (ships with Windows 10/11, no separate install)..."
+        command -v winget >/dev/null 2>&1 || {
+            echo "ERROR: winget not found. Get it from the Microsoft Store (App Installer)," >&2
+            echo "or install manually instead:" >&2
+            echo "  https://cppcheck.sourceforge.io/  and  https://releases.llvm.org/" >&2
             exit 1
         }
-        choco install cppcheck llvm -y
-        install_uv_if_missing
+        winget install --id Cppcheck.Cppcheck -e --accept-source-agreements --accept-package-agreements
+        winget install --id LLVM.LLVM -e --accept-source-agreements --accept-package-agreements
+        command -v uv >/dev/null 2>&1 || winget install --id astral-sh.uv -e --accept-source-agreements --accept-package-agreements
         ;;
     *)
         echo "Unsupported OS: $(uname -s)" >&2

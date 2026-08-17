@@ -53,10 +53,12 @@ case "$os_name" in
         echo "  brew install cppcheck llvm bear uv"
         ;;
     MINGW* | MSYS* | CYGWIN*)
-        echo "Windows (Git Bash) -- install natively, then make sure each is on PATH:"
-        echo "  cppcheck:                https://cppcheck.sourceforge.io/ (Windows installer)"
-        echo "  clang-tidy/clang-format: https://releases.llvm.org/ (LLVM Windows installer)"
-        echo "  uv:                      winget install --id=astral-sh.uv -e   (or: pip install uv)"
+        echo "Windows (Git Bash) -- winget ships with Windows 10/11, no separate install needed:"
+        echo "  winget install --id Cppcheck.Cppcheck -e"
+        echo "  winget install --id LLVM.LLVM -e            # clang-tidy + clang-format"
+        echo "  winget install --id astral-sh.uv -e"
+        echo "  No winget? Manual installers work too: https://cppcheck.sourceforge.io/"
+        echo "  and https://releases.llvm.org/ -- make sure each ends up on PATH."
         echo "  (bear is not required on Windows -- use STM32CubeIDE's native"
         echo "   'Generate compile_commands.json' checkbox instead of the bear fallback)"
         ;;
