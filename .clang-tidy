@@ -29,4 +29,11 @@ Checks: >
   bugprone-unhandled-self-assignment,
   performance-unnecessary-value-param
 WarningsAsErrors: '*'
-HeaderFilterRegex: '.*'
+# Empty (clang-tidy's real default -- NOT the same as '.*') means clang-tidy
+# only diagnoses the exact file passed on the command line, never headers it
+# transitively includes. '.*' used to mean every included header got
+# diagnosed too -- CMSIS/HAL/standard-library headers we don't own and can't
+# fix. lint.sh already scans .hpp files directly as their own targets, so
+# project-owned headers still get linted; this only stops vendor/system
+# headers pulled in along the way from blocking the build.
+HeaderFilterRegex: ''

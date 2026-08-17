@@ -68,7 +68,13 @@ else
     targets=("$@")
 fi
 
+# status: real lint findings (exit 1). config_error: the tool itself is
+# broken (missing addon, bad compile db, ...) -- kept separate so a build
+# failure caused by a real MISRA violation looks different from one caused
+# by a misconfigured toolchain (exit 2). Config errors always win the exit
+# code, since findings under a broken tool run aren't trustworthy anyway.
 status=0
+config_error=0
 
 is_excluded() {
     local path="$1"
@@ -151,13 +157,32 @@ if [ "${#c_files[@]}" -gt 0 ]; then
     if [ "$CUBEIDE" -eq 1 ]; then
         template_args=(--template='{file}:{line}:{column}: warning: {message} [{id}]')
     fi
-    if ! cppcheck --enable=all --inconclusive --addon="$MISRA_ADDON" \
+    cppcheck_log="$(mktemp)"
+    # set +e around the pipeline, not `|| true` after it: under pipefail, a
+    # failing pipeline followed by `|| true` runs `true` as its own trivial
+    # pipeline, which clobbers PIPESTATUS before the next line can read it
+    # (verified: PIPESTATUS collapses to just true's "0"). Disabling -e
+    # instead lets the real per-stage PIPESTATUS survive to the next line.
+    set +e
+    cppcheck --enable=all --inconclusive --addon="$MISRA_ADDON" \
         --platform="$CPPCHECK_PLATFORM" \
         --suppress=missingIncludeSystem --suppress=checkersReport \
         --error-exitcode=1 --suppressions-list="$SUPPRESSIONS_FILE" \
-        --inline-suppr "${template_args[@]}" "${c_files[@]}"; then
+        --inline-suppr "${template_args[@]}" "${c_files[@]}" 2>&1 | tee "$cppcheck_log"
+    cppcheck_rc="${PIPESTATUS[0]}"
+    set -e
+
+    # Config-error patterns are cppcheck telling us IT is broken, not that
+    # the code violates MISRA -- e.g. "Did not find addon misra.py" (see
+    # resolve_misra_addon above). Treat these as a distinct failure so they
+    # never get mistaken for real findings.
+    if grep -qE "Did not find addon|Bailing out from checking|unable to load" "$cppcheck_log"; then
+        echo "ERROR: cppcheck configuration problem (above) -- not a MISRA finding, lint results are unreliable until this is fixed." >&2
+        config_error=1
+    elif [ "$cppcheck_rc" -ne 0 ]; then
         status=1
     fi
+    rm -f "$cppcheck_log"
 else
     echo "no .c files found"
 fi
@@ -181,4 +206,9 @@ else
     echo "no .cpp/.hpp files found"
 fi
 
+if [ "$config_error" -eq 1 ]; then
+    echo "" >&2
+    echo "Exiting 2 (toolchain misconfigured) -- distinct from exit 1 (real findings)." >&2
+    exit 2
+fi
 exit "$status"
