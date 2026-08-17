@@ -3,8 +3,21 @@ set -euo pipefail
 
 PROJECT_DIR="${1:?usage: gen_compile_commands.sh <cubeide-project-dir>}"
 
-NATIVE_JSON="$PROJECT_DIR/Debug/compile_commands.json"
-if [ -f "$NATIVE_JSON" ]; then
+# CubeIDE writes compile_commands.json under whichever build config
+# directory was actually built (Debug/, Release/, or a custom-named
+# config) -- scan every immediate subdirectory rather than assuming
+# "Debug", and pick the most recently built one if more than one exists.
+NATIVE_JSON=""
+for cfg_dir in "$PROJECT_DIR"/*/; do
+    candidate="${cfg_dir}compile_commands.json"
+    if [ -f "$candidate" ]; then
+        if [ -z "$NATIVE_JSON" ] || [ "$candidate" -nt "$NATIVE_JSON" ]; then
+            NATIVE_JSON="$candidate"
+        fi
+    fi
+done
+
+if [ -n "$NATIVE_JSON" ]; then
     echo "Found native compile_commands.json (CubeIDE CDT export) at $NATIVE_JSON"
     cp "$NATIVE_JSON" "$PROJECT_DIR/compile_commands.json"
     exit 0
