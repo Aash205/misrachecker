@@ -91,7 +91,30 @@ addon. Everything else (exclusions, demo self-test) stays the same.
   exe-relative `addons/` lookup even though the real addon file is sitting right there.
   `lint.sh` resolves the real path itself (`resolve_misra_addon`, checked against common
   Linux/macOS/Windows install locations) and passes it explicitly instead of trusting the
-  bare name.
+  bare name. Some Windows cppcheck installs genuinely don't ship a working `addons/` folder at
+  all (a known upstream issue) — if nothing is found locally, `lint.sh` self-heals by
+  downloading `misra.py` + its `misra_9.py` dependency from cppcheck's own upstream repo into
+  a gitignored `misra/vendor-addons/` cache.
+- `misra.py` is itself a Python script; cppcheck spawns a python interpreter to run it, and its
+  own auto-detect (bare `python3` then `python` on `PATH`) can fail inside STM32CubeIDE's
+  post-build step specifically — Eclipse's spawned-process `PATH` doesn't necessarily carry the
+  same `PATH` your interactive Git Bash shell has (verified against a real CubeIDE build: every
+  file bailed out with `Failed to auto detect python`, meaning zero MISRA checks actually ran).
+  `lint.sh` resolves a `--addon-python` interpreter itself, preferring `uv python find` — `uv`
+  is already a hard dependency (it bootstraps pre-commit) and manages its own Python
+  independent of system `PATH`, so it works even on a Windows machine with no bare
+  `python3`/`python` on `PATH` at all.
+- cppcheck's C pass now uses `--project=compile_commands.json` when one exists, giving it real
+  per-file `-I`/`-D` flags from the actual CubeIDE build instead of none at all — without this,
+  cppcheck can't resolve a single one of the project's own headers (`"FreeRTOS.h"`, `"main.h"`,
+  ...) and spams `missingInclude` for every file, which also fails the build since those count
+  toward `--error-exitcode=1`. `--file-filter` restricts analysis to just the already
+  exclude-paths-filtered target files (`--project` alone would also pull in every compiled
+  HAL/CMSIS/Middlewares file). Any target file not actually present in `compile_commands.json`
+  (added since the last build, say) runs in a separate plain pass instead of hard-erroring the
+  whole run — that pass falls back to whatever `-I`/`-D` flags it can pull out of
+  `compile_flags.txt`, since cppcheck has no native concept of that file and errors on most of
+  its other flags (`--target=`, `-mcpu=`, ...) if forwarded as-is.
 - `lint.sh` exit codes: `0` clean, `1` real lint findings, `2` the toolchain itself is broken
   (e.g. `misra.py` addon not found) — kept distinct from `1` so a CubeIDE post-build failure
   caused by a misconfigured tool doesn't look identical to one caused by a real MISRA
