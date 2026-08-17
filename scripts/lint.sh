@@ -9,6 +9,12 @@ EXCLUDE_FILE="$MISRA_DIR/exclude-paths.txt"
 SUPPRESSIONS_FILE="$MISRA_DIR/suppressions.txt"
 CLANG_TIDY_CONFIG="$REPO_ROOT/.clang-tidy"
 
+FIX=0
+if [ "${1:-}" = "--fix" ]; then
+    FIX=1
+    shift
+fi
+
 if [ "$#" -eq 0 ]; then
     targets=("$REPO_ROOT")
 else
@@ -71,6 +77,8 @@ collect_files() {
     return 0
 }
 
+# cppcheck has no autofix mode -- MISRA-C findings are logic issues, not
+# mechanically fixable. --fix only applies to the clang-tidy pass below.
 echo "== MISRA C (cppcheck) =="
 c_files=()
 collect_files c_files c -- "${targets[@]}"
@@ -90,16 +98,13 @@ cpp_files=()
 collect_files cpp_files cpp hpp -- "${targets[@]}"
 
 if [ "${#cpp_files[@]}" -gt 0 ]; then
-    compile_db_arg=()
-    fallback_target_args=(-std=c++17)
-    if [ -f "$REPO_ROOT/compile_commands.json" ]; then
-        compile_db_arg=(-p "$REPO_ROOT")
-        fallback_target_args=()
-    else
-        fallback_target_args=(--target=arm-none-eabi -mcpu=cortex-m4 -mfloat-abi=soft -mthumb -std=c++17)
-    fi
+    # -p "$REPO_ROOT" picks up compile_commands.json when a real firmware
+    # project has generated one, else falls back to compile_flags.txt
+    # (ARM/Cortex-M4 target) which this repo always ships.
+    fix_args=()
+    [ "$FIX" -eq 1 ] && fix_args=(--fix)
     for f in "${cpp_files[@]}"; do
-        if ! clang-tidy --config-file="$CLANG_TIDY_CONFIG" "${compile_db_arg[@]}" "$f" -- "${fallback_target_args[@]}"; then
+        if ! clang-tidy --config-file="$CLANG_TIDY_CONFIG" -p "$REPO_ROOT" "${fix_args[@]}" "$f"; then
             status=1
         fi
     done

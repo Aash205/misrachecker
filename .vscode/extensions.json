@@ -1,7 +1,8 @@
 {
     "recommendations": [
         "llvm-vs-code-extensions.vscode-clangd",
-        "brobeson.vscode-cppcheck"
+        "brobeson.vscode-cppcheck",
+        "EditorConfig.EditorConfig"
     ],
     "unwantedRecommendations": [
         "ms-vscode.cpptools"
