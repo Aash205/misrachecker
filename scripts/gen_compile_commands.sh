@@ -17,9 +17,23 @@ for cfg_dir in "$PROJECT_DIR"/*/; do
     fi
 done
 
+# clang-tidy/clangd prefer compile_flags.txt over compile_commands.json
+# when BOTH exist in the same directory (verified empirically -- the
+# opposite of the commonly assumed precedence). Remove it once a real
+# compile_commands.json exists so there's no ambiguity; scripts/setup.sh
+# regenerates it if you ever need the fallback again.
+remove_stale_compile_flags() {
+    local flags_file="$PROJECT_DIR/compile_flags.txt"
+    if [ -f "$flags_file" ]; then
+        rm -f "$flags_file"
+        echo "Removed $flags_file (stale fallback -- compile_commands.json now takes over)."
+    fi
+}
+
 if [ -n "$NATIVE_JSON" ]; then
     echo "Found native compile_commands.json (CubeIDE CDT export) at $NATIVE_JSON"
     cp "$NATIVE_JSON" "$PROJECT_DIR/compile_commands.json"
+    remove_stale_compile_flags
     exit 0
 fi
 
@@ -55,4 +69,5 @@ bear -- "$STM32CUBEIDE_BIN" \
     -cleanBuild "$(basename "$PROJECT_DIR")"
 
 mv compile_commands.json "$PROJECT_DIR/compile_commands.json"
+remove_stale_compile_flags
 echo "Generated $PROJECT_DIR/compile_commands.json via headless build."

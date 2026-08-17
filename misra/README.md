@@ -68,3 +68,8 @@ addon. Everything else (exclusions, demo self-test) stays the same.
   headers (`<cstdint>` etc.) won't resolve until either a standalone ARM toolchain is on
   PATH and you re-run `gen_compile_flags.sh`, or you generate a real `compile_commands.json`
   (which always works, since CubeIDE's own compiler path is embedded in the real build).
+- If both `compile_flags.txt` and `compile_commands.json` exist in the same directory,
+  clang-tidy/clangd pick `compile_flags.txt` — verified empirically, the opposite of the
+  commonly assumed precedence. `gen_compile_commands.sh` deletes `compile_flags.txt` once it
+  writes a real `compile_commands.json`, so this never comes up in normal use; it only
+  matters if you're debugging why lint results don't seem to reflect the real project.
