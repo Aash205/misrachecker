@@ -6,7 +6,7 @@
             "type": "shell",
             "command": "${workspaceFolder}/scripts/check-tools.sh",
             "windows": {
-                "command": "bash",
+                "command": "C:\\Program Files\\Git\\bin\\bash.exe",
                 "args": ["${workspaceFolder}/scripts/check-tools.sh"]
             },
             "runOptions": { "runOn": "folderOpen" },
@@ -18,7 +18,7 @@
             "type": "shell",
             "command": "${workspaceFolder}/scripts/lint.sh",
             "windows": {
-                "command": "bash",
+                "command": "C:\\Program Files\\Git\\bin\\bash.exe",
                 "args": ["${workspaceFolder}/scripts/lint.sh"]
             },
             "group": { "kind": "test", "isDefault": true },
@@ -30,7 +30,7 @@
             "command": "${workspaceFolder}/scripts/format.sh",
             "args": ["fix"],
             "windows": {
-                "command": "bash",
+                "command": "C:\\Program Files\\Git\\bin\\bash.exe",
                 "args": ["${workspaceFolder}/scripts/format.sh", "fix"]
             },
             "problemMatcher": []
@@ -40,7 +40,7 @@
             "type": "shell",
             "command": "${workspaceFolder}/scripts/install-hooks.sh",
             "windows": {
-                "command": "bash",
+                "command": "C:\\Program Files\\Git\\bin\\bash.exe",
                 "args": ["${workspaceFolder}/scripts/install-hooks.sh"]
             },
             "problemMatcher": []
@@ -51,7 +51,7 @@
             "command": "${workspaceFolder}/scripts/gen_compile_commands.sh",
             "args": ["${input:cubeideProjectDir}"],
             "windows": {
-                "command": "bash",
+                "command": "C:\\Program Files\\Git\\bin\\bash.exe",
                 "args": ["${workspaceFolder}/scripts/gen_compile_commands.sh", "${input:cubeideProjectDir}"]
             },
             "problemMatcher": []

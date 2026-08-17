@@ -3,5 +3,6 @@
         "--clang-tidy",
         "--header-insertion=never"
     ],
-    "C_Cpp.intelliSenseEngine": "disabled"
+    "C_Cpp.intelliSenseEngine": "disabled",
+    "terminal.integrated.defaultProfile.windows": "Git Bash"
 }

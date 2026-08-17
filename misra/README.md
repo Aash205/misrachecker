@@ -29,6 +29,12 @@ addon. Everything else (exclusions, demo self-test) stays the same.
   `scripts/setup.sh` (bootstraps `pre-commit` via `uv` or `pip`).
 - Windows: needs Git Bash. `bear` is optional there — use CubeIDE's native
   `compile_commands.json` export instead.
+- Windows + WSL both installed: `.vscode/tasks.json`'s Windows overrides point at
+  `C:\Program Files\Git\bin\bash.exe` explicitly rather than bare `bash` — if PATH resolves
+  `bash` to WSL's launcher instead of Git Bash (common when both are present), a task looks
+  like it's running forever and does nothing, since it's operating inside WSL's filesystem,
+  not yours. If your Git install lives elsewhere (e.g. a per-user install under
+  `%LOCALAPPDATA%\Programs\Git`), update that path in `tasks.json` to match.
 - Windows PATH staleness: `setup.sh` installs tools via winget, but Windows only refreshes
   PATH for *new* processes — an already-open terminal or VSCode window won't see them.
   Close and reopen Git Bash (and restart VSCode) **before** opening the folder, so the
