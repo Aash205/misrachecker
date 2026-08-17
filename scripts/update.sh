@@ -64,11 +64,12 @@ with open(dst_path, "w") as f:
 PY
 }
 
-# Never overwrites a non-JSON file that differs from upstream -- writes a
-# .new sibling instead so a local customization (e.g. a project-specific
-# exclude-paths.txt entry) survives a re-run. This is what install.sh
-# calls too: on an empty target every file is "new", so a fresh install
-# is just a special case of an update.
+# JSON files deep-merge (see merge_json above); everything else is just
+# overwritten -- these are toolchain config (scripts/, .clang-tidy, CI
+# workflow, ...), not project-specific data, so upstream should always win.
+# exclude-paths.txt/suppressions.txt live under misra/ and are genuinely
+# project-specific, but plain overwrite is what was asked for here; a repo
+# that has customized them should diff before re-running update.sh.
 sync_file() {
     local src="$1" dst="$2"
     if [ ! -f "$dst" ]; then
@@ -83,8 +84,8 @@ sync_file() {
         echo "  merged:   ${dst#"$TARGET"/} (JSON deep-merge, upstream wins conflicts)"
         modified_count=$((modified_count + 1))
     else
-        cp "$src" "$dst.new"
-        echo "  MODIFIED: ${dst#"$TARGET"/} differs from upstream -- wrote $(basename "$dst").new to diff/merge"
+        cp "$src" "$dst"
+        echo "  updated:  ${dst#"$TARGET"/} (overwritten)"
         modified_count=$((modified_count + 1))
     fi
 }
@@ -104,8 +105,7 @@ done
 # paths baked in, wrong on any other machine.
 
 echo ""
-echo "Sync summary: $new_count new file(s), $modified_count locally-modified file(s) touched."
+echo "Sync summary: $new_count new file(s), $modified_count updated file(s)."
 if [ "$modified_count" -gt 0 ]; then
-    echo "JSON files were merged in place (upstream wins on conflicts) -- review the diff."
-    echo "Non-JSON files got a *.new sibling -- merge what you want, then delete the *.new file."
+    echo "JSON files were merged in place (upstream wins on conflicts); everything else was overwritten."
 fi

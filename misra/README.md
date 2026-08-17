@@ -48,11 +48,11 @@ addon. Everything else (exclusions, demo self-test) stays the same.
   applies to STM32CubeIDE too — it's Eclipse-based and has the same stale-PATH problem
   after installing tools that shell out to the system PATH; restart CubeIDE after
   installing anything that changes it.
-- Updating an installed copy: `scripts/update.sh <target-repo>` re-syncs from this repo
-  without clobbering local changes. `.vscode/*.json` files deep-merge in place (dicts
-  merge key-by-key, lists concat-dedupe, upstream wins scalar conflicts — needs
-  `python3`, already a hard dep via cppcheck's `misra.py` addon); any other file that
-  differs from upstream gets a `.new` sibling instead of being overwritten.
+- Updating an installed copy: `scripts/update.sh <target-repo>` re-syncs from this repo.
+  `.vscode/*.json` files deep-merge in place (dicts merge key-by-key, lists merge by
+  `label`/`id`/`name` identity where present else concat-dedupe, upstream wins scalar
+  conflicts — needs `python3`, already a hard dep via cppcheck's `misra.py` addon); every
+  other synced file (scripts/, `.clang-tidy`, CI workflow, etc.) is just overwritten.
   `install.sh` is just this run on an empty target.
 - Headers "not found" in clangd even with `compile_commands.json` present: clangd refuses
   to query an arbitrary compiler binary named in `compile_commands.json` for its implicit
