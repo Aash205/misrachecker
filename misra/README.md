@@ -29,3 +29,10 @@ addon. Everything else (exclusions, demo self-test) stays the same.
   `scripts/setup.sh` (bootstraps `pre-commit` via `uv` or `pip`).
 - Windows: needs Git Bash. `bear` is optional there — use CubeIDE's native
   `compile_commands.json` export instead.
+- Updating an installed copy: `scripts/update.sh <target-repo>` re-syncs from this repo
+  without clobbering local changes — a file that differs from upstream gets a `.new`
+  sibling instead of being overwritten. `install.sh` is just this run on an empty target.
+- Optional: install [cppcheclipse](https://github.com/cppchecksolutions/cppcheclipse) in
+  CubeIDE itself (Eclipse Marketplace) and point it at `--addon=misra.py` — same cppcheck
+  binary, same MISRA-C findings, shown in CubeIDE's own Problems view during build. No
+  equivalent plugin exists for clang-format or clang-tidy in CubeIDE right now.
