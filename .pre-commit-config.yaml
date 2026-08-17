@@ -1,0 +1,18 @@
+repos:
+  - repo: local
+    hooks:
+      - id: misra-format
+        name: clang-format (Allman, 4-space)
+        entry: scripts/format.sh fix
+        language: system
+        files: \.(c|h|cpp|hpp)$
+        # demo/ fixtures are deliberate violations for the self-test walkthrough
+        # (see README) -- never gate commits/CI on them. Run `./scripts/lint.sh
+        # demo` / `./scripts/format.sh check demo` directly to see them.
+        exclude: ^demo/
+      - id: misra-lint
+        name: MISRA lint (cppcheck MISRA C + clang-tidy best-effort C++)
+        entry: scripts/lint.sh
+        language: system
+        files: \.(c|h|cpp|hpp)$
+        exclude: ^demo/

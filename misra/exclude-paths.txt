@@ -1,0 +1,7 @@
+# Glob patterns (bash [[ == ]] matching) for paths fully excluded from both
+# lint engines. Vendor/generated code is never hand-edited, so linting it
+# just adds noise and false "violations" in code we don't control.
+*/generated/*
+*/Drivers/*HAL_Driver/*
+*/CMSIS/*
+*/Middlewares/*

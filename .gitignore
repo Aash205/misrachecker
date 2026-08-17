@@ -1,0 +1,15 @@
+# Internal planning docs, not part of shipped toolchain
+docs/superpowers/
+
+# Cppcheck / clang-tidy caches
+.cppcheck-build-dir/
+.cache/
+*.tidy-cache
+
+# Generated compile database (per-consuming-repo artifact, never checked in here)
+compile_commands.json
+
+# STM32CubeIDE build artifacts (present if toolchain is tested inside a real CubeIDE project)
+Debug/
+Release/
+.metadata/

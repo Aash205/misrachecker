@@ -1,0 +1,7 @@
+{
+    "clangd.arguments": [
+        "--clang-tidy",
+        "--header-insertion=never"
+    ],
+    "C_Cpp.intelliSenseEngine": "disabled"
+}

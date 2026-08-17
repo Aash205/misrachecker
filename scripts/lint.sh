@@ -1,0 +1,110 @@
+#!/usr/bin/env bash
+set -euo pipefail
+
+SCRIPT_DIR="$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd)"
+REPO_ROOT="$(cd "$SCRIPT_DIR/.." && pwd)"
+MISRA_DIR="$REPO_ROOT/misra"
+
+EXCLUDE_FILE="$MISRA_DIR/exclude-paths.txt"
+SUPPRESSIONS_FILE="$MISRA_DIR/suppressions.txt"
+CLANG_TIDY_CONFIG="$REPO_ROOT/.clang-tidy"
+
+if [ "$#" -eq 0 ]; then
+    targets=("$REPO_ROOT")
+else
+    targets=("$@")
+fi
+
+status=0
+
+is_excluded() {
+    local path="$1"
+    while IFS= read -r pattern; do
+        [[ -z "$pattern" || "$pattern" == \#* ]] && continue
+        # shellcheck disable=SC2053
+        if [[ "$path" == $pattern ]]; then
+            return 0
+        fi
+    done < "$EXCLUDE_FILE"
+    return 1
+}
+
+# collect_files <out-array-name> <ext...> -- <target...>
+# Each target may be a directory (searched recursively) or a single file.
+# This dual mode lets the same script serve directory-wide CI/dev-shell runs
+# and pre-commit's per-staged-file invocation.
+collect_files() {
+    local -n _out="$1"
+    shift
+    local -a exts=()
+    while [ "$1" != "--" ]; do
+        exts+=("$1")
+        shift
+    done
+    shift
+
+    local find_expr=(-name "*.${exts[0]}")
+    local e
+    for e in "${exts[@]:1}"; do
+        find_expr+=(-o -name "*.$e")
+    done
+
+    local t f matches
+    for t in "$@"; do
+        if [ -d "$t" ]; then
+            while IFS= read -r -d '' f; do
+                is_excluded "$f" && continue
+                _out+=("$f")
+            done < <(find "$t" -type f \( "${find_expr[@]}" \) -print0)
+        elif [ -f "$t" ]; then
+            is_excluded "$t" && continue
+            matches=0
+            for e in "${exts[@]}"; do
+                case "$t" in
+                    *.$e) matches=1 ;;
+                esac
+            done
+            [ "$matches" -eq 1 ] && _out+=("$t")
+        fi
+    done
+
+    return 0
+}
+
+echo "== MISRA C (cppcheck) =="
+c_files=()
+collect_files c_files c -- "${targets[@]}"
+
+if [ "${#c_files[@]}" -gt 0 ]; then
+    if ! cppcheck --enable=all --inconclusive --addon=misra.py \
+        --error-exitcode=1 --suppressions-list="$SUPPRESSIONS_FILE" \
+        --inline-suppr "${c_files[@]}"; then
+        status=1
+    fi
+else
+    echo "no .c files found"
+fi
+
+echo "== MISRA C++ best-effort (clang-tidy) =="
+cpp_files=()
+collect_files cpp_files cpp hpp -- "${targets[@]}"
+
+if [ "${#cpp_files[@]}" -gt 0 ]; then
+    compile_db_arg=()
+    fallback_target_args=(-std=c++17)
+    if [ -f "$REPO_ROOT/compile_commands.json" ]; then
+        compile_db_arg=(-p "$REPO_ROOT")
+        fallback_target_args=()
+    else
+        fallback_target_args=(--target=arm-none-eabi -mcpu=cortex-m4 -mfloat-abi=soft -mthumb -std=c++17)
+    fi
+    for f in "${cpp_files[@]}"; do
+        if ! clang-tidy --config-file="$CLANG_TIDY_CONFIG" "${compile_db_arg[@]}" "$f" -- "${fallback_target_args[@]}"; then
+            status=1
+        fi
+    done
+else
+    echo "no .cpp/.hpp files found"
+fi
+
+exit "$status"

@@ -1,0 +1,67 @@
+{
+    "version": "2.0.0",
+    "tasks": [
+        {
+            "label": "MISRA: Check tools installed",
+            "type": "shell",
+            "command": "${workspaceFolder}/scripts/check-tools.sh",
+            "windows": {
+                "command": "bash",
+                "args": ["${workspaceFolder}/scripts/check-tools.sh"]
+            },
+            "runOptions": { "runOn": "folderOpen" },
+            "presentation": { "reveal": "silent", "panel": "dedicated" },
+            "problemMatcher": []
+        },
+        {
+            "label": "MISRA: Lint",
+            "type": "shell",
+            "command": "${workspaceFolder}/scripts/lint.sh",
+            "windows": {
+                "command": "bash",
+                "args": ["${workspaceFolder}/scripts/lint.sh"]
+            },
+            "group": { "kind": "test", "isDefault": true },
+            "problemMatcher": []
+        },
+        {
+            "label": "MISRA: Format fix",
+            "type": "shell",
+            "command": "${workspaceFolder}/scripts/format.sh",
+            "args": ["fix"],
+            "windows": {
+                "command": "bash",
+                "args": ["${workspaceFolder}/scripts/format.sh", "fix"]
+            },
+            "problemMatcher": []
+        },
+        {
+            "label": "MISRA: Install pre-commit hooks",
+            "type": "shell",
+            "command": "${workspaceFolder}/scripts/install-hooks.sh",
+            "windows": {
+                "command": "bash",
+                "args": ["${workspaceFolder}/scripts/install-hooks.sh"]
+            },
+            "problemMatcher": []
+        },
+        {
+            "label": "MISRA: Regen compile_commands.json",
+            "type": "shell",
+            "command": "${workspaceFolder}/scripts/gen_compile_commands.sh",
+            "args": ["${input:cubeideProjectDir}"],
+            "windows": {
+                "command": "bash",
+                "args": ["${workspaceFolder}/scripts/gen_compile_commands.sh", "${input:cubeideProjectDir}"]
+            },
+            "problemMatcher": []
+        }
+    ],
+    "inputs": [
+        {
+            "id": "cubeideProjectDir",
+            "type": "promptString",
+            "description": "Path to the STM32CubeIDE project directory"
+        }
+    ]
+}

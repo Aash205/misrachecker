@@ -1,0 +1,32 @@
+# BEST-EFFORT MISRA C++:2008-flavored ruleset. NOT a certified MISRA C++
+# checker -- no free/open-source tool provides that (verified: Cppcheck's
+# MISRA C++ addon is a paid Premium feature; PC-lint Plus/PVS-Studio/Helix
+# QAC are all paid). This curated clang-tidy subset catches similar issues
+# (C-style casts, goto, uninitialized vars, implicit narrowing) without
+# citing real MISRA rule numbers or claiming compliance.
+# Upgrade path: buy Cppcheck Premium before an audit, swap this file's role
+# for --addon=misra_cpp in scripts/lint.sh, keep everything else unchanged.
+Checks: >
+  -*,
+  modernize-avoid-c-style-cast,
+  cppcoreguidelines-avoid-goto,
+  cppcoreguidelines-pro-type-const-cast,
+  cppcoreguidelines-init-variables,
+  cppcoreguidelines-pro-bounds-array-to-pointer-decay,
+  cppcoreguidelines-pro-bounds-pointer-arithmetic,
+  cppcoreguidelines-macro-usage,
+  cppcoreguidelines-no-malloc,
+  cppcoreguidelines-special-member-functions,
+  modernize-use-nullptr,
+  modernize-use-override,
+  readability-implicit-bool-conversion,
+  bugprone-narrowing-conversions,
+  bugprone-use-after-move,
+  bugprone-signed-char-misuse,
+  bugprone-suspicious-string-compare,
+  bugprone-integer-division,
+  bugprone-branch-clone,
+  bugprone-unhandled-self-assignment,
+  performance-unnecessary-value-param
+WarningsAsErrors: '*'
+HeaderFilterRegex: '.*'

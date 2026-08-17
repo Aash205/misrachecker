@@ -1,0 +1,6 @@
+# cppcheck --suppressions-list format: <errorId>:<file-glob>[:line]
+# Use this for legitimate, reviewed MISRA deviations in hand-written code
+# (not for excluding whole directories -- that's exclude-paths.txt).
+#
+# Example:
+# misra-c2012-15.1:src/legacy_bridge.c:42
