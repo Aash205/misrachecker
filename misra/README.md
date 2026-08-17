@@ -23,6 +23,12 @@ addon. Everything else (exclusions, demo self-test) stays the same.
 
 ## Notes
 
+- Cppcheck platform: `arm32-wchar_t4.xml` (bundled, cppcheck's own upstream ARM definition)
+  — 32-bit int/long/pointer, **unsigned-by-default char** (real ARM EABI behavior, verified
+  against arm-none-eabi-gcc's own `__CHAR_UNSIGNED__`/`__SIZEOF_WCHAR_T__` macros). Without
+  this, cppcheck defaults to this dev machine's own type sizes, which can both miss real
+  bugs (e.g. shift-overflow that's fine on a 64-bit host `long` but UB on a 32-bit one) and
+  misjudge signedness-sensitive MISRA checks.
 - Excluded dirs: `exclude-paths.txt` — vendor/generated code, skipped by every engine.
 - Formatting: `scripts/format.sh check|fix [target...]` (clang-format, Allman, 4-space).
 - Pre-commit: `../.pre-commit-config.yaml` auto-formats + lints staged files; set up via

@@ -8,6 +8,7 @@ MISRA_DIR="$REPO_ROOT/misra"
 EXCLUDE_FILE="$MISRA_DIR/exclude-paths.txt"
 SUPPRESSIONS_FILE="$MISRA_DIR/suppressions.txt"
 CLANG_TIDY_CONFIG="$REPO_ROOT/.clang-tidy"
+CPPCHECK_PLATFORM="$MISRA_DIR/arm32-wchar_t4.xml"
 
 FIX=0
 if [ "${1:-}" = "--fix" ]; then
@@ -84,14 +85,18 @@ c_files=()
 collect_files c_files c -- "${targets[@]}"
 
 if [ "${#c_files[@]}" -gt 0 ]; then
-    # --platform=unix32: STM32/Cortex-M is 32-bit (4-byte long/pointer).
-    # Without this, cppcheck defaults to the host's own type sizes (64-bit
-    # long/pointer on most dev machines), which silently misses real bugs
-    # -- e.g. `1L << 31` is fine with a 64-bit long but undefined behavior
-    # with a 32-bit one. unix32 is the closest built-in match; cppcheck has
-    # no dedicated Cortex-M/ARM platform.
+    # --platform: STM32/Cortex-M is 32-bit with unsigned-by-default char
+    # (ARM EABI), neither of which matches this dev machine's own type
+    # sizes/signedness. Without this, cppcheck silently misses real bugs
+    # (e.g. `1L << 31` is fine with a 64-bit host long, undefined behavior
+    # with Cortex-M's 32-bit one) and can misjudge char-signedness-sensitive
+    # MISRA checks. misra/arm32-wchar_t4.xml is cppcheck's own upstream ARM
+    # platform definition, bundled here since its install path isn't
+    # consistent across OSes/package managers; verified against this
+    # exact target's own compiler macros (__SIZEOF_WCHAR_T__=4,
+    # __CHAR_UNSIGNED__=1).
     if ! cppcheck --enable=all --inconclusive --addon=misra.py \
-        --platform=unix32 \
+        --platform="$CPPCHECK_PLATFORM" \
         --error-exitcode=1 --suppressions-list="$SUPPRESSIONS_FILE" \
         --inline-suppr "${c_files[@]}"; then
         status=1
