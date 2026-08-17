@@ -64,6 +64,35 @@ with open(dst_path, "w") as f:
 PY
 }
 
+# .gitignore is target-owned (has firmware-repo-specific entries), so it
+# never gets overwritten -- diff line-by-line and append any upstream line
+# missing from the target's copy. Idempotent: a line already merged in is
+# "already present" next run, so re-running update.sh doesn't duplicate it.
+merge_gitignore() {
+    local src="$1" dst="$2"
+    python3 - "$src" "$dst" <<'PY'
+import sys
+
+src_path, dst_path = sys.argv[1], sys.argv[2]
+with open(src_path) as f:
+    src_lines = [l.rstrip("\n") for l in f]
+with open(dst_path) as f:
+    dst_lines = [l.rstrip("\n") for l in f]
+
+existing = set(dst_lines)
+new_lines = [l for l in src_lines if l.strip() and l not in existing]
+
+if new_lines:
+    out = dst_lines
+    if out and out[-1].strip():
+        out.append("")
+    out.append("# --- merged from misrachecker toolchain update ---")
+    out.extend(new_lines)
+    with open(dst_path, "w") as f:
+        f.write("\n".join(out) + "\n")
+PY
+}
+
 # JSON files deep-merge (see merge_json above); everything else is just
 # overwritten -- these are toolchain config (scripts/, .clang-tidy, CI
 # workflow, ...), not project-specific data, so upstream should always win.
@@ -83,6 +112,10 @@ sync_file() {
         merge_json "$src" "$dst"
         echo "  merged:   ${dst#"$TARGET"/} (JSON deep-merge, upstream wins conflicts)"
         modified_count=$((modified_count + 1))
+    elif [[ "$(basename "$dst")" == ".gitignore" ]]; then
+        merge_gitignore "$src" "$dst"
+        echo "  merged:   ${dst#"$TARGET"/} (.gitignore line union, target's entries kept)"
+        modified_count=$((modified_count + 1))
     else
         cp "$src" "$dst"
         echo "  updated:  ${dst#"$TARGET"/} (overwritten)"
@@ -95,7 +128,7 @@ while IFS= read -r -d '' f; do
     sync_file "$f" "$TARGET/$rel"
 done < <(find "$SRC_ROOT/.vscode" "$SRC_ROOT/misra" "$SRC_ROOT/scripts" -type f -print0)
 
-for f in .clang-tidy .clang-format .editorconfig \
+for f in .clang-tidy .clang-format .editorconfig .gitignore \
     .pre-commit-config.yaml .github/workflows/misra-lint.yml; do
     sync_file "$SRC_ROOT/$f" "$TARGET/$f"
 done
