@@ -6,8 +6,11 @@ docs/superpowers/
 .cache/
 *.tidy-cache
 
-# Generated compile database (per-consuming-repo artifact, never checked in here)
+# Generated compile database / clangd fallback flags (machine-specific --
+# paths depend on the local ARM toolchain's exact version/install location,
+# regenerate via scripts/gen_compile_commands.sh / gen_compile_flags.sh)
 compile_commands.json
+compile_flags.txt
 
 # STM32CubeIDE build artifacts (present if toolchain is tested inside a real CubeIDE project)
 Debug/

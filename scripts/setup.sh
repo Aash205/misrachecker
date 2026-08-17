@@ -42,6 +42,9 @@ case "$(uname -s)" in
         ;;
 esac
 
+echo ""
+"$SCRIPT_DIR/gen_compile_flags.sh"
+
 "$SCRIPT_DIR/install-hooks.sh"
 
 echo ""

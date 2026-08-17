@@ -19,6 +19,9 @@ jobs:
       - name: Make scripts executable
         run: chmod +x scripts/*.sh
 
+      - name: Generate compile_flags.txt
+        run: ./scripts/gen_compile_flags.sh
+
       - name: Install uv and pre-commit
         run: |
           curl -LsSf https://astral.sh/uv/install.sh | sh

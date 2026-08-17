@@ -36,10 +36,14 @@ while IFS= read -r -d '' f; do
     sync_file "$f" "$TARGET/$rel"
 done < <(find "$SRC_ROOT/.vscode" "$SRC_ROOT/misra" "$SRC_ROOT/scripts" -type f -print0)
 
-for f in .clang-tidy .clang-format .editorconfig compile_flags.txt \
+for f in .clang-tidy .clang-format .editorconfig \
     .pre-commit-config.yaml .github/workflows/misra-lint.yml; do
     sync_file "$SRC_ROOT/$f" "$TARGET/$f"
 done
+# compile_flags.txt is NOT synced -- it's machine-generated (real ARM
+# toolchain include paths, if found) by scripts/gen_compile_flags.sh,
+# which setup.sh already runs. A copied one would have this machine's
+# paths baked in, wrong on any other machine.
 
 echo ""
 echo "Sync summary: $new_count new file(s), $modified_count locally-modified file(s) left untouched."

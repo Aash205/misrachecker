@@ -52,3 +52,13 @@ addon. Everything else (exclusions, demo self-test) stays the same.
   `--query-driver=**/arm-none-eabi-*` to allow it — without this flag, clangd falls back to
   its own bundled Clang headers, which don't match the ARM toolchain's. Restart the clangd
   language server after this changes (Command Palette → `clangd: Restart language server`).
+- `compile_flags.txt` is generated, not shipped (`scripts/gen_compile_flags.sh`, called by
+  `setup.sh`) — gitignored, since the correct paths depend on this exact machine's ARM
+  toolchain version/location. It's the fallback used before you've run
+  `gen_compile_commands.sh` against a real project (or for any file that isn't in that
+  project's build). If `arm-none-eabi-g++` is on PATH, it queries GCC directly for its real
+  system-include paths (the C++ standard library lives in a CPU/FPU-specific multilib
+  subdirectory clang can't guess); if not found, you get CPU/target flags only and standard
+  headers (`<cstdint>` etc.) won't resolve until either a standalone ARM toolchain is on
+  PATH and you re-run `gen_compile_flags.sh`, or you generate a real `compile_commands.json`
+  (which always works, since CubeIDE's own compiler path is embedded in the real build).
