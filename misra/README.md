@@ -33,8 +33,11 @@ addon. Everything else (exclusions, demo self-test) stays the same.
 - Formatting: `scripts/format.sh check|fix [target...]` (clang-format, Allman, 4-space).
 - Pre-commit: `../.pre-commit-config.yaml` auto-formats + lints staged files; set up via
   `scripts/setup.sh` (bootstraps `pre-commit` via `uv` or `pip`).
-- Windows: needs Git Bash. `bear` is optional there — use CubeIDE's native
-  `compile_commands.json` export instead.
+- Windows: needs Git Bash.
+- `bear` is optional on every platform, not auto-installed by `setup.sh` — it's only a
+  fallback for old STM32CubeIDE versions without the native `compile_commands.json` export
+  checkbox. Install it yourself (`apt`/`brew`) only if `gen_compile_commands.sh` reports no
+  native export was found.
 - Windows + WSL both installed: `.vscode/tasks.json`'s Windows overrides point at
   `C:\Program Files\Git\bin\bash.exe` explicitly rather than bare `bash` — if PATH resolves
   `bash` to WSL's launcher instead of Git Bash (common when both are present), a task looks

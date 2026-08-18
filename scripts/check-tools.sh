@@ -2,10 +2,6 @@
 set -euo pipefail
 
 os_name="$(uname -s)"
-is_windows=0
-case "$os_name" in
-    MINGW* | MSYS* | CYGWIN*) is_windows=1 ;;
-esac
 
 missing=()
 optional_missing=()
@@ -15,14 +11,10 @@ command -v clang-tidy >/dev/null 2>&1 || missing+=("clang-tidy")
 command -v clang-format >/dev/null 2>&1 || missing+=("clang-format")
 
 # bear (compile_commands.json fallback for old CubeIDE) has no solid native
-# Windows build. On Windows it's advisory only -- CubeIDE's native
-# "Generate compile_commands.json" export checkbox is the primary path
-# everywhere and doesn't need bear at all.
-if [ "$is_windows" -eq 1 ]; then
-    command -v bear >/dev/null 2>&1 || optional_missing+=("bear")
-else
-    command -v bear >/dev/null 2>&1 || missing+=("bear")
-fi
+# Windows build, and isn't needed on any OS as long as CubeIDE's native
+# "Generate compile_commands.json" export checkbox is used -- that's the
+# primary path everywhere. Advisory only, on every platform.
+command -v bear >/dev/null 2>&1 || optional_missing+=("bear")
 
 # pre-commit itself is bootstrapped on demand by install-hooks.sh via
 # whichever of these is available -- either is fine, no preference enforced.
@@ -35,7 +27,7 @@ if [ "${#missing[@]}" -eq 0 ]; then
     if [ "${#optional_missing[@]}" -gt 0 ]; then
         echo "Optional: ${optional_missing[*]} not found -- only needed as a compile_commands.json"
         echo "fallback for old STM32CubeIDE versions without the native export checkbox. Not"
-        echo "required on Windows; use CubeIDE's native export instead."
+        echo "required on any platform; use CubeIDE's native export instead."
     fi
     exit 0
 fi
@@ -45,12 +37,16 @@ echo ""
 case "$os_name" in
     Linux*)
         echo "Install with:"
-        echo "  sudo apt-get update && sudo apt-get install -y cppcheck clang-tidy clang-format bear"
+        echo "  sudo apt-get update && sudo apt-get install -y cppcheck clang-tidy clang-format"
         echo "  curl -LsSf https://astral.sh/uv/install.sh | sh   # or: sudo apt-get install -y python3-pip"
+        echo "  (bear not required -- use STM32CubeIDE's native 'Generate compile_commands.json'"
+        echo "   checkbox instead; sudo apt-get install -y bear only if you need the fallback)"
         ;;
     Darwin*)
         echo "Install with:"
-        echo "  brew install cppcheck llvm bear uv"
+        echo "  brew install cppcheck llvm uv"
+        echo "  (bear not required -- use STM32CubeIDE's native 'Generate compile_commands.json'"
+        echo "   checkbox instead; brew install bear only if you need the fallback)"
         ;;
     MINGW* | MSYS* | CYGWIN*)
         echo "Windows (Git Bash) -- winget ships with Windows 10/11, no separate install needed:"

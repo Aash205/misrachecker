@@ -11,12 +11,12 @@ case "$(uname -s)" in
     Linux*)
         echo "Installing tools via apt..."
         sudo apt-get update
-        sudo apt-get install -y cppcheck clang-tidy clang-format bear
+        sudo apt-get install -y cppcheck clang-tidy clang-format
         install_uv_if_missing
         ;;
     Darwin*)
         echo "Installing tools via brew..."
-        brew install cppcheck llvm bear
+        brew install cppcheck llvm
         install_uv_if_missing
         ;;
     MINGW* | MSYS* | CYGWIN*)
