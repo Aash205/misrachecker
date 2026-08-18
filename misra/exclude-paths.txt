@@ -6,6 +6,44 @@
 */CMSIS/*
 */Middlewares/*
 
+# CubeIDE-generated runtime stubs living directly under Core/Src (not caught
+# by the Drivers/CMSIS/Middlewares globs above since they sit next to
+# hand-written project code) -- weak POSIX hooks (_sbrk, _write, _kill, ...)
+# and clock-init boilerplate ST templates out for every target, never
+# hand-edited, same "not our code" rationale as the vendor dirs above.
+*/syscalls.c
+*/sysmem.c
+*/system_stm32*.c
+
+# CubeMX/CubeIDE skeleton files that are near-100% generated (interrupt
+# vector stubs, MSP init, HAL timebase override) -- USER CODE markers exist
+# in these too, but in practice almost nothing is ever added there.
+# main.c and freertos.c are deliberately NOT listed here: real init/task
+# logic lives in their USER CODE blocks, so MISRA findings in hand-written
+# code there should stay visible.
+*/stm32*_it.c
+*/*_hal_msp.c
+*/*_timebase_tim.c
+# Matching headers for the above -- interrupt-handler prototypes only, no logic.
+*/stm32*_it.h
+
+# CubeMX-template config headers -- HAL module enable/disable and FreeRTOS
+# tuning knobs are technically user-editable, but the surrounding file is
+# CubeMX-regenerated boilerplate and its own MISRA findings (function-like
+# config macros, ST/FreeRTOS header patterns) are template noise, not
+# project logic.
+*/stm32*_hal_conf.h
+*/FreeRTOSConfig.h
+
+# Core/Startup: reset handler + vector table (.s) and linker script (.ld),
+# 100% CubeMX-generated, never hand-edited (verified against ST's own
+# project layout: Core/{Inc,Src,Startup}, Drivers/{CMSIS,*_HAL_Driver},
+# Middlewares/ -- https://www.st.com/resource/en/user_manual/um2388-...).
+# lint.sh only ever collects .c/.cpp/.hpp today so this folder was never
+# actually a live risk, but excluded explicitly so it stays inert if the
+# collected extensions ever change or someone lints this path directly.
+*/Core/Startup/*
+
 # Non-firmware dirs that can end up under the repo root (Python venvs used
 # to bootstrap pre-commit, VCS internals, build output) -- these aren't
 # project source, but format.sh/lint.sh default to scanning the whole repo
