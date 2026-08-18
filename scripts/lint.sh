@@ -304,6 +304,25 @@ PY
         done < "$REPO_ROOT/compile_flags.txt"
     fi
 
+    # exclude-paths.txt only keeps a path out of the target-file list handed
+    # to cppcheck below -- it does nothing once cppcheck follows a target
+    # file's own #include chain into a header under one of those paths
+    # (HAL/CMSIS/Middlewares/generated). cppcheck's MISRA addon reports
+    # findings at the header's own file:line, so vendor headers pulled in by
+    # a project's own .c files still flood the output even though the
+    # header itself was never a scan target. Verified against a real
+    # STM32CubeIDE project (sensor_fusion_rtos): every HAL header included
+    # by main.c lit up despite Drivers/*HAL_Driver/* being excluded.
+    # Fix: reuse the same glob patterns as cppcheck suppressions (errorId
+    # '*' wildcard = any finding) so vendor headers are silent regardless of
+    # how they're reached, not just when passed directly as a target.
+    combined_suppressions="$(mktemp)"
+    cp "$SUPPRESSIONS_FILE" "$combined_suppressions"
+    while IFS= read -r pattern; do
+        [[ -z "$pattern" || "$pattern" == \#* ]] && continue
+        printf '*:%s\n' "$pattern" >> "$combined_suppressions"
+    done < "$EXCLUDE_FILE"
+
     cppcheck_log="$(mktemp)"
     # set +e around the pipeline, not `|| true` after it: under pipefail, a
     # failing pipeline followed by `|| true` runs `true` as its own trivial
@@ -314,10 +333,11 @@ PY
     cppcheck --enable=all --inconclusive --addon="$MISRA_ADDON" "${ADDON_PYTHON_ARGS[@]}" \
         --platform="$CPPCHECK_PLATFORM" \
         --suppress=missingIncludeSystem --suppress=checkersReport \
-        --error-exitcode=1 --suppressions-list="$SUPPRESSIONS_FILE" \
+        --error-exitcode=1 --suppressions-list="$combined_suppressions" \
         --inline-suppr "${template_args[@]}" "${extra_include_args[@]}" "${c_files[@]}" 2>&1 | tee "$cppcheck_log"
     cppcheck_rc="${PIPESTATUS[0]}"
     set -e
+    rm -f "$combined_suppressions"
 
     # Config-error patterns are cppcheck telling us IT is broken, not that
     # the code violates MISRA -- e.g. "Did not find addon misra.py" (see
