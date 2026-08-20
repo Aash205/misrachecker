@@ -1,0 +1,3 @@
+{"summary": "MisraExternalIdentifiers", "data": [{"name": "dummy_driver_init", "file": "demo/src/dummy_driver.c", "line": 5, "column": 9, "decl": false}]}
+{"summary": "MisraInternalIdentifiers", "data": []}
+{"summary": "MisraLocalIdentifiers", "data": [{"name": "result", "file": "demo/src/dummy_driver.c", "line": 7, "column": 13}, {"name": "flag", "file": "demo/src/dummy_driver.c", "line": 5, "column": 35}]}

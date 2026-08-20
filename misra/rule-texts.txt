@@ -1,0 +1,63 @@
+# MISRA-C:2012 rule descriptions consumed by cppcheck's misra.py addon via
+# --rule-texts=. Descriptions here are short paraphrases meant for
+# developer-facing lint output only -- they are NOT the authoritative
+# rule text. For audit / certification use, obtain the official
+# MISRA-C:2012 document from https://misra.org.uk/ and reconcile against
+# the exact wording there.
+#
+# Format (documented by misra.py): the parser only starts collecting
+# entries AFTER a literal line "Appendix A Summary of guidelines" (this
+# mirrors the section header in the real MISRA pdf). Each rule is then
+# "Rule <n.m>" on one line followed by a free-text description on the
+# next. Add new rules as the linter surfaces them; missing rules just
+# fall back to the placeholder text.
+
+Appendix A Summary of guidelines
+
+Rule 2.5
+A project should not contain unused macro declarations.
+
+Rule 3.1
+The character sequences '/*' and '//' shall not be used within a comment (i.e. no nested comments, and no '//' inside a '/* */' block).
+
+Rule 5.8
+Identifiers that define objects or functions with external linkage shall be unique across the whole program.
+
+Rule 7.3
+The lowercase character 'l' shall not be used as a literal suffix (it is visually indistinguishable from digit '1'; use 'L' instead).
+
+Rule 8.2
+Function types shall be in prototype form with named parameters (no old-style K&R declarations, no unnamed parameters in declarations).
+
+Rule 8.4
+A compatible declaration shall be visible when an object or function with external linkage is defined (i.e. every non-static definition must have a matching declaration in a header the definition also includes).
+
+Rule 8.7
+Functions and objects should not be defined with external linkage if they are only referenced from within a single translation unit (make them static).
+
+Rule 8.9
+An object should be defined at block scope if its identifier only appears in a single function (turn file-scope 'static' variables used by only one function into 'static' locals unless debugger visibility is required).
+
+Rule 10.4
+Both operands of an operator in which the usual arithmetic conversions are performed shall have the same essential type category (no mixing signed/unsigned, no implicit narrowing between essential types).
+
+Rule 11.4
+A conversion should not be performed between a pointer to object and an integer type (e.g. assigning a memory-mapped register address literal to a pointer).
+
+Rule 11.8
+A conversion shall not remove any 'const' or 'volatile' qualification from the type pointed to by a pointer.
+
+Rule 15.5
+A function should have a single point of exit at the end (avoid multiple 'return' statements scattered through the body).
+
+Rule 17.3
+A function shall not be declared implicitly (every called function must have a prototype in scope; no relying on the C89 implicit int return).
+
+Rule 17.7
+The value returned by a function having non-void return type shall be used, or explicitly cast to '(void)' to document that it is intentionally discarded.
+
+Rule 20.2
+The ', " or \ characters and the /* or // character sequences shall not occur in a header file name (i.e. keep '#include' filenames simple ASCII).
+
+Rule 21.1
+Reserved identifiers (those beginning with underscore + uppercase, or double underscore) shall not be the target of a '#define' or '#undef'.

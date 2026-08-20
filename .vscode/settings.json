@@ -1,9 +1,18 @@
 {
     "clangd.arguments": [
-        "--clang-tidy",
         "--header-insertion=never",
         "--query-driver=**/arm-none-eabi-*"
     ],
     "C_Cpp.intelliSenseEngine": "disabled",
-    "terminal.integrated.defaultProfile.windows": "Git Bash"
+    "terminal.integrated.defaultProfile.windows": "Git Bash",
+    "triggerTaskOnSave.tasks": {
+        "MISRA: Lint (current file)": [
+            "**/*.c",
+            "**/*.h",
+            "**/*.cpp",
+            "**/*.hpp"
+        ]
+    },
+    "triggerTaskOnSave.showNotifications": false,
+    "triggerTaskOnSave.restart": true
 }

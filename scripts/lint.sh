@@ -69,6 +69,28 @@ elif downloaded_addon="$(download_misra_addon)"; then
     MISRA_ADDON="$downloaded_addon"
 fi
 
+# cppcheck's --addon= accepts either a bare script path OR a JSON manifest
+# with a "script" + "args" list -- the JSON form is the only way to pass
+# --rule-texts= through to misra.py, since cppcheck's own CLI has no
+# forwarding syntax for addon args. Without this, every finding prints the
+# placeholder "misra violation (use --rule-texts=<file> to get proper
+# output) [misra-c2012-N.M]" instead of the actual rule description.
+# MISRA-C:2012 rule text is copyrighted by MISRA Ltd. and can't ship with
+# cppcheck, so users have to supply their own text file; misra/rule-texts.txt
+# in this repo is a paraphrased developer-facing summary (not audit-grade).
+RULE_TEXTS_FILE="$MISRA_DIR/rule-texts.txt"
+if [ -f "$RULE_TEXTS_FILE" ]; then
+    misra_manifest="$(mktemp --suffix=.json)"
+    python3 - "$MISRA_ADDON" "$RULE_TEXTS_FILE" "$misra_manifest" <<'PY'
+import json, sys
+script, rule_texts, out = sys.argv[1:4]
+with open(out, "w") as f:
+    json.dump({"script": script, "args": ["--rule-texts=" + rule_texts]}, f)
+PY
+    MISRA_ADDON="$misra_manifest"
+    trap 'rm -f "$misra_manifest"' EXIT
+fi
+
 # misra.py is itself a Python script -- cppcheck spawns a python
 # interpreter to run it, and its own auto-detect (bare "python3" then
 # "python" on PATH) can fail: "Bailing out ... Failed to auto detect
@@ -245,10 +267,20 @@ if [ "${#c_files[@]}" -gt 0 ]; then
     # rather than depending on cppcheck's own project-file matching.
     extra_include_args=()
     if [ -f "$REPO_ROOT/compile_commands.json" ]; then
+        # Python's print() on Windows adds '\r\n' to stdout in text mode,
+        # and bash's `read -r` only strips '\n' -- verified: every extracted
+        # flag ends up with a trailing '\r' that cppcheck receives as part
+        # of the path (e.g. '-I.../Core/Inc\r'), which then reports as
+        # "Couldn't find path" because the directory literally doesn't have
+        # a CR-suffixed name. Same CRLF hazard applies to compile_flags.txt
+        # further down (checked into the repo on Windows = CRLF endings).
+        # Strip '\r' explicitly after every read rather than relying on
+        # Python/git line-ending behavior we don't control here.
         while IFS= read -r flag; do
-            extra_include_args+=("$flag")
+            flag="${flag%$'\r'}"
+            [ -n "$flag" ] && extra_include_args+=("$flag")
         done < <(python3 - "$REPO_ROOT/compile_commands.json" <<'PY'
-import json, shlex, sys
+import json, os, posixpath, shlex, sys
 
 with open(sys.argv[1]) as f:
     entries = json.load(f)
@@ -259,12 +291,45 @@ directory = entry.get("directory", "").replace("\\", "/").rstrip("/")
 tokens = entry.get("arguments") or shlex.split(entry.get("command", ""))
 
 def resolve(path):
+    # Normalize slashes first so posixpath can collapse '..' segments
+    # regardless of which slash CubeIDE emitted. cppcheck on Windows
+    # treats unnormalized '..' in -I paths as literal path components
+    # when probing existence (verified against a real CubeIDE export --
+    # every '-I../Core/Inc'-style entry got 'Couldn't find path'), which
+    # then cascades into missingInclude and [misra-config] errors on
+    # everything the header would have defined (HAL_OK, SPI1, ...).
+    # posixpath.normpath keeps '/' as separator, which is what cppcheck
+    # accepts on Windows without slash-flipping quirks.
     path = path.replace("\\", "/")
     if path.startswith("/") or (len(path) > 1 and path[1] == ":"):
-        return path
-    return directory + "/" + path
+        joined = path
+    else:
+        joined = directory + "/" + path
+    return posixpath.normpath(joined)
 
 seen = set()
+def emit(flag):
+    if flag not in seen:
+        seen.add(flag)
+        print(flag)
+
+# gcc/arm-none-eabi-gcc auto-defines __GNUC__ (and friends) as builtin
+# predefines -- they never appear on the command line, so they aren't
+# in compile_commands.json either. cppcheck DOESN'T inherit builtin
+# predefines even in --language=c mode: verified against this exact
+# CubeIDE export, cmsis_compiler.h's compiler-detection chain (checks
+# __CC_ARM, __ARMCC_VERSION, __GNUC__ in order) falls through to
+# '#error Unknown compiler', which then trips cppcheck into
+# 'Bailing out from analysis' and suppresses every subsequent MISRA
+# finding across the whole TU (silent false pass). Inject the minimum
+# GCC predefine set CMSIS's own compiler chain needs so preprocessing
+# survives long enough for the MISRA addon to actually run.
+compiler = tokens[0].lower() if tokens else ""
+if "gcc" in compiler or compiler.endswith("cc"):
+    emit("-D__GNUC__=10")
+    emit("-D__GNUC_MINOR__=3")
+    emit("-D__GNUC_PATCHLEVEL__=1")
+
 i = 0
 while i < len(tokens):
     tok = tokens[i]
@@ -276,9 +341,8 @@ while i < len(tokens):
         i += 1
     elif tok.startswith("-D"):
         flag = tok
-    if flag is not None and flag not in seen:
-        seen.add(flag)
-        print(flag)
+    if flag is not None:
+        emit(flag)
     i += 1
 PY
         )
@@ -293,6 +357,7 @@ PY
         # everything else rather than forwarding the file as-is.
         prev_flag=""
         while IFS= read -r flag; do
+            flag="${flag%$'\r'}"
             case "$prev_flag" in
                 -isystem) extra_include_args+=("-I$flag") ;;
             esac

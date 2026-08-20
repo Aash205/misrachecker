@@ -22,7 +22,39 @@
                 "args": ["${workspaceFolder}/scripts/lint.sh"]
             },
             "group": { "kind": "test", "isDefault": true },
-            "problemMatcher": []
+            "runOptions": { "runOn": "folderOpen" },
+            "presentation": { "reveal": "silent", "panel": "dedicated", "clear": true },
+            "problemMatcher": [
+                {
+                    "owner": "misra-cppcheck",
+                    "fileLocation": "absolute",
+                    "pattern": {
+                        "regexp": "^(.+?):(\\d+):(\\d+):\\s+(error|warning|style|performance|portability|information|note):\\s+(.+?)\\s+\\[(.+)\\]$",
+                        "file": 1, "line": 2, "column": 3, "severity": 4, "message": 5, "code": 6
+                    }
+                }
+            ]
+        },
+        {
+            "label": "MISRA: Lint (current file)",
+            "type": "process",
+            "command": "${workspaceFolder}/scripts/lint.sh",
+            "windows": {
+                "command": "C:\\Program Files\\Git\\bin\\bash.exe",
+                "args": ["${workspaceFolder}/scripts/lint.sh", "${file}"]
+            },
+            "args": ["${file}"],
+            "presentation": { "reveal": "silent", "panel": "dedicated", "clear": true },
+            "problemMatcher": [
+                {
+                    "owner": "misra-cppcheck",
+                    "fileLocation": "absolute",
+                    "pattern": {
+                        "regexp": "^(.+?):(\\d+):(\\d+):\\s+(error|warning|style|performance|portability|information|note):\\s+(.+?)\\s+\\[(.+)\\]$",
+                        "file": 1, "line": 2, "column": 3, "severity": 4, "message": 5, "code": 6
+                    }
+                }
+            ]
         },
         {
             "label": "MISRA: Format fix",
