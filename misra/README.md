@@ -47,12 +47,13 @@ addon. Everything else (exclusions, demo self-test) stays the same.
   fallback for old STM32CubeIDE versions without the native `compile_commands.json` export
   checkbox. Install it yourself (`apt`/`brew`) only if `gen_compile_commands.sh` reports no
   native export was found.
-- Windows + WSL both installed: `.vscode/tasks.json`'s Windows overrides point at
-  `C:\Program Files\Git\bin\bash.exe` explicitly rather than bare `bash` — if PATH resolves
-  `bash` to WSL's launcher instead of Git Bash (common when both are present), a task looks
-  like it's running forever and does nothing, since it's operating inside WSL's filesystem,
-  not yours. If your Git install lives elsewhere (e.g. a per-user install under
-  `%LOCALAPPDATA%\Programs\Git`), update that path in `tasks.json` to match.
+- Windows + WSL both installed: `.vscode/tasks.json`'s Windows overrides run
+  `scripts/git-bash-resolve.cmd` rather than bare `bash` — if PATH resolves `bash` to WSL's
+  launcher instead of Git Bash (common when both are present), a task looks like it's running
+  forever and does nothing, since it's operating inside WSL's filesystem, not yours. The
+  resolver checks known Git-for-Windows install locations directly (Program Files, per-user
+  `%LOCALAPPDATA%\Programs\Git`, scoop) instead of trusting PATH. Installed somewhere else?
+  Add a line to the `CANDIDATES[]` block at the top of that script.
 - Windows PATH staleness: `setup.sh` installs tools via winget, but Windows only refreshes
   PATH for *new* processes — an already-open terminal or VSCode window won't see them.
   Close and reopen Git Bash (and restart VSCode) **before** opening the folder, so the
@@ -154,9 +155,9 @@ otherwise be silently dropped). `scripts/lint.sh --cubeide` forces cppcheck's ou
 Setup: Project Properties → C/C++ Build → Settings → **Build Steps** tab → Post-build steps
 command:
 ```
-"C:\Program Files\Git\bin\bash.exe" "${ProjDirPath}/scripts/lint.sh" --cubeide "${ProjDirPath}"
+"${ProjDirPath}/scripts/git-bash-resolve.cmd" "${ProjDirPath}/scripts/lint.sh" --cubeide "${ProjDirPath}"
 ```
-(Linux/macOS: drop the `bash.exe` part, just `"${ProjDirPath}/scripts/lint.sh" --cubeide "${ProjDirPath}"`.)
+(Linux/macOS: skip the resolver, just `"${ProjDirPath}/scripts/lint.sh" --cubeide "${ProjDirPath}"`.)
 Confirm the GNU C/C++ Error Parser is enabled under the **Error Parsers** tab (on by default
 for managed-build projects). Findings then appear as build warnings/errors after every
 build. Note this runs *after* compilation, so a lint finding doesn't block getting a

@@ -6,6 +6,12 @@
     "C_Cpp.intelliSenseEngine": "disabled",
     "terminal.integrated.defaultProfile.windows": "Git Bash",
     "triggerTaskOnSave.tasks": {
+        "MISRA: Format fix (current file)": [
+            "**/*.c",
+            "**/*.h",
+            "**/*.cpp",
+            "**/*.hpp"
+        ],
         "MISRA: Lint (current file)": [
             "**/*.c",
             "**/*.h",

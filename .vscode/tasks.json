@@ -6,7 +6,7 @@
             "type": "process",
             "command": "${workspaceFolder}/scripts/check-tools.sh",
             "windows": {
-                "command": "C:\\Program Files\\Git\\bin\\bash.exe",
+                "command": "${workspaceFolder}\\scripts\\git-bash-resolve.cmd",
                 "args": ["${workspaceFolder}/scripts/check-tools.sh"]
             },
             "runOptions": { "runOn": "folderOpen" },
@@ -18,7 +18,7 @@
             "type": "process",
             "command": "${workspaceFolder}/scripts/lint.sh",
             "windows": {
-                "command": "C:\\Program Files\\Git\\bin\\bash.exe",
+                "command": "${workspaceFolder}\\scripts\\git-bash-resolve.cmd",
                 "args": ["${workspaceFolder}/scripts/lint.sh"]
             },
             "group": { "kind": "test", "isDefault": true },
@@ -40,7 +40,7 @@
             "type": "process",
             "command": "${workspaceFolder}/scripts/lint.sh",
             "windows": {
-                "command": "C:\\Program Files\\Git\\bin\\bash.exe",
+                "command": "${workspaceFolder}\\scripts\\git-bash-resolve.cmd",
                 "args": ["${workspaceFolder}/scripts/lint.sh", "${file}"]
             },
             "args": ["${file}"],
@@ -62,9 +62,21 @@
             "command": "${workspaceFolder}/scripts/format.sh",
             "args": ["fix"],
             "windows": {
-                "command": "C:\\Program Files\\Git\\bin\\bash.exe",
+                "command": "${workspaceFolder}\\scripts\\git-bash-resolve.cmd",
                 "args": ["${workspaceFolder}/scripts/format.sh", "fix"]
             },
+            "problemMatcher": []
+        },
+        {
+            "label": "MISRA: Format fix (current file)",
+            "type": "process",
+            "command": "${workspaceFolder}/scripts/format.sh",
+            "args": ["fix", "${file}"],
+            "windows": {
+                "command": "${workspaceFolder}\\scripts\\git-bash-resolve.cmd",
+                "args": ["${workspaceFolder}/scripts/format.sh", "fix", "${file}"]
+            },
+            "presentation": { "reveal": "silent", "panel": "dedicated", "clear": true },
             "problemMatcher": []
         },
         {
@@ -72,7 +84,7 @@
             "type": "process",
             "command": "${workspaceFolder}/scripts/install-hooks.sh",
             "windows": {
-                "command": "C:\\Program Files\\Git\\bin\\bash.exe",
+                "command": "${workspaceFolder}\\scripts\\git-bash-resolve.cmd",
                 "args": ["${workspaceFolder}/scripts/install-hooks.sh"]
             },
             "problemMatcher": []
@@ -83,7 +95,7 @@
             "command": "${workspaceFolder}/scripts/gen_compile_commands.sh",
             "args": ["${input:cubeideProjectDir}"],
             "windows": {
-                "command": "C:\\Program Files\\Git\\bin\\bash.exe",
+                "command": "${workspaceFolder}\\scripts\\git-bash-resolve.cmd",
                 "args": ["${workspaceFolder}/scripts/gen_compile_commands.sh", "${input:cubeideProjectDir}"]
             },
             "problemMatcher": []

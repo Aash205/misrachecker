@@ -40,9 +40,9 @@ cd /path/to/your-firmware-repo && ./scripts/setup.sh
 Project Properties → C/C++ Build → Settings → **Build Steps** tab → Post-build steps command:
 
 ```
-"C:\Program Files\Git\bin\bash.exe" "${ProjDirPath}/scripts/lint.sh" --cubeide "${ProjDirPath}"
+"${ProjDirPath}/scripts/git-bash-resolve.cmd" "${ProjDirPath}/scripts/lint.sh" --cubeide "${ProjDirPath}"
 ```
 
-(Linux/macOS: drop the `bash.exe` part — just `"${ProjDirPath}/scripts/lint.sh" --cubeide "${ProjDirPath}"`.)
+(Linux/macOS: skip the resolver — just `"${ProjDirPath}/scripts/lint.sh" --cubeide "${ProjDirPath}"`.)
 
 Details, licensing, and the MISRA C++ upgrade path: [`misra/README.md`](misra/README.md).
