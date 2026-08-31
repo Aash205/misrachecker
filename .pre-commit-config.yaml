@@ -9,10 +9,13 @@ repos:
         # demo/ fixtures are deliberate violations for the self-test walkthrough
         # (see README) -- never gate commits/CI on them. Run `./scripts/lint.sh
         # demo` / `./scripts/format.sh check demo` directly to see them.
-        exclude: ^demo/
+        # threadx-example/ is a real vendor project (STMicroelectronics'
+        # x-cube-azrtos-l4) pulled in whole as an end-to-end verification
+        # fixture, not our code -- same reasoning, don't gate commits on it.
+        exclude: ^(demo|threadx-example)/
       - id: misra-lint
         name: MISRA lint (cppcheck MISRA C + clang-tidy best-effort C++)
         entry: scripts/lint.sh
         language: system
         files: \.(c|h|cpp|hpp)$
-        exclude: ^demo/
+        exclude: ^(demo|threadx-example)/
