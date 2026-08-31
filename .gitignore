@@ -23,6 +23,11 @@ Debug/
 Release/
 .metadata/
 
+# STM32Cube VS Code extension / CMake build output
+build/
+CMakeCache.txt
+CMakeFiles/
+
 # Python venv used to bootstrap pre-commit
 .venv/
 

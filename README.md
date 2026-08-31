@@ -2,9 +2,9 @@
 
 [![MISRA lint](https://github.com/Aash205/misrachecker/actions/workflows/misra-lint.yml/badge.svg)](https://github.com/Aash205/misrachecker/actions/workflows/misra-lint.yml)
 
-MISRA-flavored lint toolchain for STM32CubeIDE firmware projects. Tooling only, no firmware
-source. Compilation stays exclusively in STM32CubeIDE; this adds linting, formatting, and
-pre-commit checks in VSCode, the terminal, and CI.
+MISRA-flavored lint toolchain for STM32 firmware projects. Tooling only, no firmware source.
+Compilation stays in STM32CubeIDE or the STM32Cube VS Code extension's CMake toolchain; this
+adds linting, formatting, and pre-commit checks in VSCode, the terminal, and CI.
 
 ## What you get
 
