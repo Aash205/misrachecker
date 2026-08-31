@@ -30,7 +30,16 @@ addon. Everything else (exclusions, demo self-test) stays the same.
   bugs (e.g. shift-overflow that's fine on a 64-bit host `long` but UB on a 32-bit one) and
   misjudge signedness-sensitive MISRA checks.
 - Excluded dirs: `exclude-paths.txt` — vendor/generated code, skipped by every engine.
-- Formatting: `scripts/format.sh check|fix [target...]` (clang-format, Allman, 4-space).
+- Formatting: `scripts/format.sh check|fix [target...]` (clang-format, Allman, 4-space, CRLF
+  line endings). Trailing comments use `///` and are column-aligned (clang-format's
+  `AlignTrailingComments`, on by default) — matches firmware team's existing template style.
+- Naming/casing: **not enforced**, deliberately. No `readability-identifier-naming` in
+  `../.clang-tidy`, and MISRA C:2012 itself doesn't mandate casing (only distinctness/length,
+  rules 5.1–5.9). The firmware team's own template mixes conventions (`Motor_control` vs
+  `Motor_stspin250_control_on` vs CubeMX's `htim3`/`HAL_GPIO_WritePin`), so no single naming
+  policy fits without constant false flags against generated code. In hand-written code, match
+  the surrounding ST/HAL convention (capitalized module prefix + snake_case tail for functions,
+  PascalCase params, `UPPER_SNAKE` macros) rather than the demo/ fixtures' plain snake_case.
 - Pre-commit: `../.pre-commit-config.yaml` auto-formats + lints staged files; set up via
   `scripts/setup.sh` (bootstraps `pre-commit` via `uv` or `pip`).
 - Windows: needs Git Bash.

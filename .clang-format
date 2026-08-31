@@ -7,3 +7,4 @@ AllowShortIfStatementsOnASingleLine: false
 AllowShortFunctionsOnASingleLine: None
 SpaceBeforeParens: ControlStatements
 PointerAlignment: Left
+LineEnding: CRLF

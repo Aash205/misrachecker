@@ -1,3 +1,7 @@
 * text=auto eol=lf
 
 *.sh text eol=lf
+*.c text eol=crlf
+*.h text eol=crlf
+*.cpp text eol=crlf
+*.hpp text eol=crlf

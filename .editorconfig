@@ -13,3 +13,6 @@ trim_trailing_whitespace = false
 
 [*.{yml,yaml,json}]
 indent_size = 2
+
+[*.{c,h,cpp,hpp}]
+end_of_line = crlf

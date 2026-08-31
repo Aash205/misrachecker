@@ -128,8 +128,8 @@ while IFS= read -r -d '' f; do
     sync_file "$f" "$TARGET/$rel"
 done < <(find "$SRC_ROOT/.vscode" "$SRC_ROOT/misra" "$SRC_ROOT/scripts" -type f -print0)
 
-for f in .clang-tidy .clang-format .editorconfig .gitignore \
-    .pre-commit-config.yaml .github/workflows/misra-lint.yml; do
+for f in .clang-tidy .clang-format .editorconfig .gitattributes .gitignore \
+    .pre-commit-config.yaml .github/workflows/misra-lint.yml CODING_CONVENTIONS.md; do
     sync_file "$SRC_ROOT/$f" "$TARGET/$f"
 done
 # compile_flags.txt is NOT synced -- it's machine-generated (real ARM
