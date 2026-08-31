@@ -31,11 +31,6 @@
 	</natures>
 	<linkedResources>
 		<link>
-			<name>Doc/README.md</name>
-			<type>1</type>
-			<locationURI>PARENT-1-PROJECT_LOC/Tx_Thread_Creation_README.md</locationURI>
-		</link>
-		<link>
 			<name>STM32L4R5ZITX_FLASH.ld</name>
 			<type>1</type>
 			<locationURI>PARENT-1-PROJECT_LOC/Core/Startup/STM32L4R5ZITX_FLASH.ld</locationURI>

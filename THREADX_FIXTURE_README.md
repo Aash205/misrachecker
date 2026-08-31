@@ -4,6 +4,16 @@ ST's `Tx_Thread_Creation` example (x-cube-azrtos-l4), standard STM32 layout at r
 `Core/` is linted; `Drivers/`/`Middlewares/` are excluded vendor code (deviations documented in
 `misra/suppressions.txt` — don't "fix" those).
 
+## What it does
+
+Creates 3 threads (MainThread, ThreadOne, ThreadTwo) demonstrating priority/preemption-threshold
+changes on the fly. `LED_GREEN` toggles every 500ms (5s), then every 200ms (5s), repeats 3x, then
+settles to toggling every 1s forever. `LED_RED` toggles every 1s and an error message prints over
+serial on any error.
+
+- Board: NUCLEO-L4R5ZI (STM32L4R5xx)
+- Serial: LPUART1, 115200 8N1, no flow control
+
 ## Path A — STM32CubeIDE
 
 1. File → Open Projects from File System → `STM32CubeIDE/`
