@@ -1,7 +1,7 @@
 #!/usr/bin/env bash
 set -euo pipefail
 
-PROJECT_DIR="${1:?usage: gen_compile_commands.sh <cubeide-project-dir>}"
+PROJECT_DIR="${1:?usage: gen_compile_commands.sh <cubeide-project-dir | cmake-source-dir>}"
 
 # Two build systems write a native compile_commands.json here, at two
 # different depths:
