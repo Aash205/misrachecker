@@ -7,6 +7,11 @@ docs/superpowers/
 *.tidy-cache
 *.dump
 
+# cppcheck's cross-translation-unit analysis temp files (--enable=all
+# writes these to cwd, e.g. `194526.ctu-info`; not always cleaned up if a
+# run is killed/times out)
+*.ctu-info
+
 # Generated compile database / clangd fallback flags (machine-specific --
 # paths depend on the local ARM toolchain's exact version/install location,
 # regenerate via scripts/gen_compile_commands.sh / gen_compile_flags.sh)

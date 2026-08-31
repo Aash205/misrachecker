@@ -235,10 +235,18 @@ if [ "${#c_files[@]}" -gt 0 ]; then
     # consistent across OSes/package managers; verified against this
     # exact target's own compiler macros (__SIZEOF_WCHAR_T__=4,
     # __CHAR_UNSIGNED__=1).
-    # missingIncludeSystem/checkersReport are cppcheck's own tool tips, not
-    # findings (cppcheck says so itself: "Standard library headers do not
-    # need to be provided"). Harmless as terminal noise, but --cubeide forces
-    # every line's severity to "warning:" for CDT's parser -- without
+    # missingIncludeSystem/checkersReport/normalCheckLevelMaxBranches are
+    # cppcheck's own tool tips, not findings (cppcheck says so itself:
+    # "Standard library headers do not need to be provided"). Harmless as
+    # terminal noise -- EXCEPT --error-exitcode=1 below counts them anyway:
+    # verified cppcheck 2.21.1 sets the process exit code for
+    # normalCheckLevelMaxBranches ("Limiting analysis of branches...")
+    # despite it being severity=information and printing nothing that looks
+    # like a finding, which silently failed the build/pre-commit hook on a
+    # function complex enough to hit cppcheck's default check-level branch
+    # limit even with zero real violations. Must suppress all three or
+    # --error-exitcode fires on noise. --cubeide forces every line's
+    # severity to "warning:" for CDT's parser -- without
     # suppressing these, they'd show up looking exactly like real "header
     # not found" problems in CubeIDE's Problems view.
     template_args=()
@@ -398,6 +406,7 @@ PY
     cppcheck --enable=all --inconclusive --addon="$MISRA_ADDON" "${ADDON_PYTHON_ARGS[@]}" \
         --platform="$CPPCHECK_PLATFORM" \
         --suppress=missingIncludeSystem --suppress=checkersReport \
+        --suppress=normalCheckLevelMaxBranches \
         --error-exitcode=1 --suppressions-list="$combined_suppressions" \
         --inline-suppr "${template_args[@]}" "${extra_include_args[@]}" "${c_files[@]}" 2>&1 | tee "$cppcheck_log"
     cppcheck_rc="${PIPESTATUS[0]}"
@@ -406,10 +415,17 @@ PY
 
     # Config-error patterns are cppcheck telling us IT is broken, not that
     # the code violates MISRA -- e.g. "Did not find addon misra.py" (see
-    # resolve_misra_addon above) or "Failed to auto detect python" (see
-    # resolve_addon_python above). Treat these as a distinct failure so
-    # they never get mistaken for real findings.
-    if grep -qE "Did not find addon|Bailing out from checking|unable to load|Failed to auto detect python" "$cppcheck_log"; then
+    # resolve_misra_addon above), "Failed to auto detect python" (see
+    # resolve_addon_python above), or misra.py's own "[misra-config]" tag
+    # (emitted per-identifier as "Because of missing configuration, misra
+    # checking is incomplete" whenever a project macro/type can't be
+    # resolved -- e.g. no real compile_commands.json yet, only the
+    # compile_flags.txt CPU/target-flags fallback, which never carries
+    # project -I paths). Findings from a run missing macro/type info aren't
+    # trustworthy (real violations can be silently missed, not just
+    # over-reported), so this counts as the tool being unconfigured too,
+    # same as the other patterns -- not a real MISRA finding to fix in code.
+    if grep -qE "Did not find addon|Bailing out from checking|unable to load|Failed to auto detect python|\[misra-config\]" "$cppcheck_log"; then
         echo "ERROR: cppcheck configuration problem (above) -- not a MISRA finding, lint results are unreliable until this is fixed." >&2
         config_error=1
     elif [ "$cppcheck_rc" -ne 0 ]; then
