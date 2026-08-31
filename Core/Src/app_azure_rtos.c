@@ -28,6 +28,7 @@
 /* Includes ------------------------------------------------------------------*/
 
 #include "app_azure_rtos.h"
+#include "main.h"
 #include "stm32l4xx.h"
 
 /* Private includes ----------------------------------------------------------*/
@@ -67,23 +68,21 @@ static TX_BYTE_POOL tx_app_byte_pool;
 
 /* Private function prototypes -----------------------------------------------*/
 /* USER CODE BEGIN PFP */
-void Error_Handler(void);
 /* USER CODE END PFP */
 
 /**
-  * @brief  Define the initial system.
-  * @param  first_unused_memory : Pointer to the first
+ * @brief  Define the initial system.
+ * @param  first_unused_memory : Pointer to the first
  * unused memory
-  * @retval None
-  */
+ * @retval None
+ */
 VOID tx_application_define(VOID* first_unused_memory)
 {
     /* USER CODE BEGIN  tx_application_define_1*/
 
     /* USER CODE END  tx_application_define_1 */
 #if (USE_STATIC_ALLOCATION == 1)
-    UINT status = TX_SUCCESS;
-    VOID* memory_ptr;
+    (void)first_unused_memory;
 
     if (tx_byte_pool_create(&tx_app_byte_pool, "Tx App memory pool", tx_byte_pool_buffer,
                             TX_APP_MEM_POOL_SIZE) != TX_SUCCESS)
@@ -98,8 +97,8 @@ VOID tx_application_define(VOID* first_unused_memory)
 
         /* USER CODE END TX_Byte_Pool_Success */
 
-        memory_ptr = (VOID*)&tx_app_byte_pool;
-        status = App_ThreadX_Init(memory_ptr);
+        VOID* memory_ptr = (VOID*)&tx_app_byte_pool;
+        UINT status = App_ThreadX_Init(memory_ptr);
         if (status != TX_SUCCESS)
         {
             /* USER CODE BEGIN  App_ThreadX_Init_Error */

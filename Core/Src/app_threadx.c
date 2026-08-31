@@ -45,26 +45,26 @@
 /* USER CODE END PM */
 
 /* Private variables ---------------------------------------------------------*/
-TX_THREAD tx_app_thread;
+static TX_THREAD tx_app_thread;
 /* USER CODE BEGIN PV */
-TX_THREAD ThreadOne;
-TX_THREAD ThreadTwo;
-TX_EVENT_FLAGS_GROUP EventFlag;
+static TX_THREAD ThreadOne;
+static TX_THREAD ThreadTwo;
+static TX_EVENT_FLAGS_GROUP EventFlag;
 /* USER CODE END PV */
 
 /* Private function prototypes -----------------------------------------------*/
 /* USER CODE BEGIN PFP */
-void ThreadOne_Entry(ULONG thread_input);
-void ThreadTwo_Entry(ULONG thread_input);
-void App_Delay(uint32_t Delay);
+static void ThreadOne_Entry(ULONG thread_input);
+static void ThreadTwo_Entry(ULONG thread_input);
+static void App_Delay(uint32_t Delay);
 /* USER CODE END PFP */
 
 /**
-  * @brief  Application ThreadX Initialization.
-  * @param memory_ptr: memory pointer
-  *
+ * @brief  Application ThreadX Initialization.
+ * @param memory_ptr: memory pointer
+ *
  * @retval int
-  */
+ */
 UINT App_ThreadX_Init(VOID* memory_ptr)
 {
     UINT ret = TX_SUCCESS;
@@ -126,11 +126,11 @@ UINT App_ThreadX_Init(VOID* memory_ptr)
     return ret;
 }
 /**
-  * @brief  Function implementing the MainThread_Entry thread.
-  * @param  thread_input:
+ * @brief  Function implementing the MainThread_Entry thread.
+ * @param  thread_input:
  * Hardcoded to 0.
-  * @retval None
-  */
+ * @retval None
+ */
 void MainThread_Entry(ULONG thread_input)
 {
     /* USER CODE BEGIN MainThread_Entry */
@@ -140,7 +140,7 @@ void MainThread_Entry(ULONG thread_input)
     uint8_t count = 0;
     (void)thread_input;
 
-    while (count < 3)
+    while (count < 3U)
     {
         count++;
         if (tx_event_flags_get(&EventFlag, THREAD_ONE_EVT, TX_OR_CLEAR, &actual_flags,
@@ -153,9 +153,9 @@ void MainThread_Entry(ULONG thread_input)
             /* Update the priority and preemption threshold of ThreadTwo
       to allow the
              * preemption of ThreadOne */
-            tx_thread_priority_change(&ThreadTwo, NEW_THREAD_TWO_PRIO, &old_prio);
-            tx_thread_preemption_change(&ThreadTwo, NEW_THREAD_TWO_PREEMPTION_THRESHOLD,
-                                        &old_pre_threshold);
+            (void)tx_thread_priority_change(&ThreadTwo, NEW_THREAD_TWO_PRIO, &old_prio);
+            (void)tx_thread_preemption_change(&ThreadTwo, NEW_THREAD_TWO_PREEMPTION_THRESHOLD,
+                                              &old_pre_threshold);
 
             if (tx_event_flags_get(&EventFlag, THREAD_TWO_EVT, TX_OR_CLEAR, &actual_flags,
                                    TX_WAIT_FOREVER) != TX_SUCCESS)
@@ -165,16 +165,16 @@ void MainThread_Entry(ULONG thread_input)
             else
             {
                 /* Reset the priority and preemption threshold of ThreadTwo */
-                tx_thread_priority_change(&ThreadTwo, THREAD_TWO_PRIO, &old_prio);
-                tx_thread_preemption_change(&ThreadTwo, THREAD_TWO_PREEMPTION_THRESHOLD,
-                                            &old_pre_threshold);
+                (void)tx_thread_priority_change(&ThreadTwo, THREAD_TWO_PRIO, &old_prio);
+                (void)tx_thread_preemption_change(&ThreadTwo, THREAD_TWO_PREEMPTION_THRESHOLD,
+                                                  &old_pre_threshold);
             }
         }
     }
 
     /* Destroy ThreadOne and ThreadTwo */
-    tx_thread_terminate(&ThreadOne);
-    tx_thread_terminate(&ThreadTwo);
+    (void)tx_thread_terminate(&ThreadOne);
+    (void)tx_thread_terminate(&ThreadTwo);
 
     /* Infinite loop */
     while (1)
@@ -182,17 +182,17 @@ void MainThread_Entry(ULONG thread_input)
         HAL_GPIO_TogglePin(LED1_GPIO_Port, LED1_Pin);
 
         /* Thread sleep for 1s */
-        tx_thread_sleep(100);
+        (void)tx_thread_sleep(100);
     }
     /* USER CODE END MainThread_Entry */
 }
 
 /**
-  * @brief  Function that implements the kernel's initialization.
-  * @param  None
-  * @retval
+ * @brief  Function that implements the kernel's initialization.
+ * @param  None
+ * @retval
  * None
-  */
+ */
 void MX_ThreadX_Init(void)
 {
     /* USER CODE BEGIN  Before_Kernel_Start */
@@ -208,12 +208,12 @@ void MX_ThreadX_Init(void)
 
 /* USER CODE BEGIN 1 */
 /**
-  * @brief  Function implementing the ThreadOne thread.
-  * @param  thread_input: Not used
-  *
+ * @brief  Function implementing the ThreadOne thread.
+ * @param  thread_input: Not used
+ *
  * @retval None
-  */
-void ThreadOne_Entry(ULONG thread_input)
+ */
+static void ThreadOne_Entry(ULONG thread_input)
 {
     (void)thread_input;
     uint8_t count = 0;
@@ -225,7 +225,7 @@ void ThreadOne_Entry(ULONG thread_input)
         /* Delay for 500ms (App_Delay is used to avoid context change). */
         App_Delay(50);
         count++;
-        if (count == 10)
+        if (count == 10U)
         {
             count = 0;
             if (tx_event_flags_set(&EventFlag, THREAD_ONE_EVT, TX_OR) != TX_SUCCESS)
@@ -237,12 +237,12 @@ void ThreadOne_Entry(ULONG thread_input)
 }
 
 /**
-  * @brief  Function implementing the ThreadTwo thread.
-  * @param  thread_input: Not used
-  *
+ * @brief  Function implementing the ThreadTwo thread.
+ * @param  thread_input: Not used
+ *
  * @retval None
-  */
-void ThreadTwo_Entry(ULONG thread_input)
+ */
+static void ThreadTwo_Entry(ULONG thread_input)
 {
     (void)thread_input;
     uint8_t count = 0;
@@ -253,7 +253,7 @@ void ThreadTwo_Entry(ULONG thread_input)
         /* Delay for 200ms (App_Delay is used to avoid context change). */
         App_Delay(20);
         count++;
-        if (count == 25)
+        if (count == 25U)
         {
             count = 0;
             if (tx_event_flags_set(&EventFlag, THREAD_TWO_EVT, TX_OR) != TX_SUCCESS)
@@ -265,15 +265,16 @@ void ThreadTwo_Entry(ULONG thread_input)
 }
 
 /**
-  * @brief  Application Delay function.
-  * @param  Delay : number of ticks to wait
-  * @retval
+ * @brief  Application Delay function.
+ * @param  Delay : number of ticks to wait
+ * @retval
  * None
-  */
-void App_Delay(uint32_t Delay)
+ */
+static void App_Delay(uint32_t Delay)
 {
     UINT initial_time = tx_time_get();
     while ((tx_time_get() - initial_time) < Delay)
-        ;
+    {
+    }
 }
 /* USER CODE END 1 */

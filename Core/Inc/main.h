@@ -26,8 +26,8 @@
 /* USER CODE END Header */
 
 /* Define to prevent recursive inclusion -------------------------------------*/
-#ifndef __MAIN_H
-#define __MAIN_H
+#ifndef MAIN_H
+#define MAIN_H
 
 #ifdef __cplusplus
 extern "C"
@@ -78,4 +78,4 @@ extern "C"
 }
 #endif
 
-#endif /* __MAIN_H */
+#endif /* MAIN_H */

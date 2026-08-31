@@ -1,27 +1,27 @@
 /* USER CODE BEGIN Header */
 /**
-  ******************************************************************************
-  * @file
+ ******************************************************************************
+ * @file
  * ThreadX/Tx_Thread_Creation/Src/main.c
-  * @author  MCD Application Team
-  * @brief   Main program
+ * @author  MCD Application Team
+ * @brief   Main program
  * body
-  ******************************************************************************
-  *
+ ******************************************************************************
+ *
  * @attention
-  *
-  * Copyright (c) 2021 STMicroelectronics.
-  * All rights reserved.
-  *
-  * This
+ *
+ * Copyright (c) 2021 STMicroelectronics.
+ * All rights reserved.
+ *
+ * This
  * software is licensed under terms that can be found in the LICENSE file
-  * in the root directory
+ * in the root directory
  * of this software component.
-  * If no LICENSE file comes with this software, it is provided
+ * If no LICENSE file comes with this software, it is provided
  * AS-IS.
-  *
-  ******************************************************************************
-  */
+ *
+ ******************************************************************************
+ */
 /* USER CODE END Header */
 /* Includes ------------------------------------------------------------------*/
 #include "main.h"
@@ -51,6 +51,11 @@
    set to 'Yes') calls
  * __io_putchar() */
 #define PUTCHAR_PROTOTYPE int __io_putchar(int ch)
+/* syscalls.c's _write() calls this with external linkage (see the
+ * `extern int __io_putchar(int ch) __attribute__((weak));` there) --
+ * declare it here too so the definition below has a visible declaration
+ * in its own file. */
+extern int __io_putchar(int ch);
 #else
 #define PUTCHAR_PROTOTYPE int fputc(int ch, FILE* f)
 #endif
@@ -58,14 +63,14 @@
 /* USER CODE END PM */
 
 /* Private variables ---------------------------------------------------------*/
-UART_HandleTypeDef hlpuart1;
+static UART_HandleTypeDef hlpuart1;
 
 /* USER CODE BEGIN PV */
 
 /* USER CODE END PV */
 
 /* Private function prototypes -----------------------------------------------*/
-void SystemClock_Config(void);
+static void SystemClock_Config(void);
 static void MX_GPIO_Init(void);
 static void MX_LPUART1_UART_Init(void);
 /* USER CODE BEGIN PFP */
@@ -78,9 +83,9 @@ static void MX_LPUART1_UART_Init(void);
 /* USER CODE END 0 */
 
 /**
-  * @brief  The application entry point.
-  * @retval int
-  */
+ * @brief  The application entry point.
+ * @retval int
+ */
 int main(void)
 {
     /* USER CODE BEGIN 1 */
@@ -90,7 +95,7 @@ int main(void)
     /* MCU Configuration--------------------------------------------------------*/
 
     /* Reset of all peripherals, Initializes the Flash interface and the Systick. */
-    HAL_Init();
+    (void)HAL_Init();
 
     /* USER CODE BEGIN Init */
 
@@ -125,25 +130,25 @@ int main(void)
 }
 
 /**
-  * @brief System Clock Configuration
-  * @retval None
-  */
-void SystemClock_Config(void)
+ * @brief System Clock Configuration
+ * @retval None
+ */
+static void SystemClock_Config(void)
 {
     RCC_OscInitTypeDef RCC_OscInitStruct = {0};
     RCC_ClkInitTypeDef RCC_ClkInitStruct = {0};
 
     /** Configure the main internal regulator output voltage
-  */
+     */
     if (HAL_PWREx_ControlVoltageScaling(PWR_REGULATOR_VOLTAGE_SCALE1_BOOST) != HAL_OK)
     {
         Error_Handler();
     }
 
     /** Initializes the RCC Oscillators according to the specified parameters
-  * in the
+     * in the
      * RCC_OscInitTypeDef structure.
-  */
+     */
     RCC_OscInitStruct.OscillatorType = RCC_OSCILLATORTYPE_MSI;
     RCC_OscInitStruct.MSIState = RCC_MSI_ON;
     RCC_OscInitStruct.MSICalibrationValue = 0;
@@ -161,7 +166,7 @@ void SystemClock_Config(void)
     }
 
     /** Initializes the CPU, AHB and APB buses clocks
-  */
+     */
     RCC_ClkInitStruct.ClockType =
         RCC_CLOCKTYPE_HCLK | RCC_CLOCKTYPE_SYSCLK | RCC_CLOCKTYPE_PCLK1 | RCC_CLOCKTYPE_PCLK2;
     RCC_ClkInitStruct.SYSCLKSource = RCC_SYSCLKSOURCE_PLLCLK;
@@ -175,15 +180,15 @@ void SystemClock_Config(void)
     }
 
     /** Enable MSI Auto calibration
-  */
+     */
     HAL_RCCEx_EnableMSIPLLMode();
 }
 
 /**
-  * @brief LPUART1 Initialization Function
-  * @param None
-  * @retval None
-  */
+ * @brief LPUART1 Initialization Function
+ * @param None
+ * @retval None
+ */
 static void MX_LPUART1_UART_Init(void)
 {
 
@@ -227,10 +232,10 @@ static void MX_LPUART1_UART_Init(void)
 }
 
 /**
-  * @brief GPIO Initialization Function
-  * @param None
-  * @retval None
-  */
+ * @brief GPIO Initialization Function
+ * @param None
+ * @retval None
+ */
 static void MX_GPIO_Init(void)
 {
     GPIO_InitTypeDef GPIO_InitStruct = {0};
@@ -270,16 +275,16 @@ static void MX_GPIO_Init(void)
 /* USER CODE BEGIN 4 */
 
 /**
-  * @brief  Retargets the C library printf function to the USART.
-  * @param  None
-  * @retval
+ * @brief  Retargets the C library printf function to the USART.
+ * @param  None
+ * @retval
  * None
-  */
+ */
 PUTCHAR_PROTOTYPE
 {
     /* Place your implementation of fputc here */
     /* e.g. write a character to the LPUART1 and Loop until the end of transmission */
-    HAL_UART_Transmit(&hlpuart1, (uint8_t*)&ch, 1, 0xFFFF);
+    (void)HAL_UART_Transmit(&hlpuart1, (uint8_t*)&ch, 1, 0xFFFF);
 
     return ch;
 }
@@ -287,16 +292,16 @@ PUTCHAR_PROTOTYPE
 /* USER CODE END 4 */
 
 /**
-  * @brief  Period elapsed callback in non blocking mode
-  * @note   This function is called
+ * @brief  Period elapsed callback in non blocking mode
+ * @note   This function is called
  * when TIM6 interrupt took place, inside
-  * HAL_TIM_IRQHandler(). It makes a direct call to
+ * HAL_TIM_IRQHandler(). It makes a direct call to
  * HAL_IncTick() to increment
-  * a global variable "uwTick" used as application time base.
-  *
+ * a global variable "uwTick" used as application time base.
+ *
  * @param  htim : TIM handle
-  * @retval None
-  */
+ * @retval None
+ */
 void HAL_TIM_PeriodElapsedCallback(TIM_HandleTypeDef* htim)
 {
     /* USER CODE BEGIN Callback 0 */
@@ -312,9 +317,9 @@ void HAL_TIM_PeriodElapsedCallback(TIM_HandleTypeDef* htim)
 }
 
 /**
-  * @brief  This function is executed in case of error occurrence.
-  * @retval None
-  */
+ * @brief  This function is executed in case of error occurrence.
+ * @retval None
+ */
 void Error_Handler(void)
 {
     /* USER CODE BEGIN Error_Handler_Debug */
@@ -322,7 +327,7 @@ void Error_Handler(void)
     while (1)
     {
         HAL_GPIO_TogglePin(LED2_GPIO_Port, LED2_Pin);
-        printf("** Error occurred ** \n\r");
+        (void)printf("** Error occurred ** \n\r");
         HAL_Delay(1000);
     }
     /* USER CODE END Error_Handler_Debug */
@@ -330,14 +335,14 @@ void Error_Handler(void)
 
 #ifdef USE_FULL_ASSERT
 /**
-  * @brief  Reports the name of the source file and the source line number
-  *         where the
+ * @brief  Reports the name of the source file and the source line number
+ *         where the
  * assert_param error has occurred.
-  * @param  file: pointer to the source file name
-  * @param
+ * @param  file: pointer to the source file name
+ * @param
  * line: assert_param error line source number
-  * @retval None
-  */
+ * @retval None
+ */
 void assert_failed(uint8_t* file, uint32_t line)
 {
     /* USER CODE BEGIN 6 */

@@ -9,13 +9,30 @@ repos:
         # demo/ fixtures are deliberate violations for the self-test walkthrough
         # (see README) -- never gate commits/CI on them. Run `./scripts/lint.sh
         # demo` / `./scripts/format.sh check demo` directly to see them.
-        # threadx-example/ is a real vendor project (STMicroelectronics'
-        # x-cube-azrtos-l4) pulled in whole as an end-to-end verification
-        # fixture, not our code -- same reasoning, don't gate commits on it.
-        exclude: ^(demo|threadx-example)/
+        # Drivers/ and Middlewares/ are vendor libraries (STMicroelectronics'
+        # x-cube-azrtos-l4: HAL, CMSIS, ThreadX kernel) pulled in whole at
+        # repo root -- not our code, don't gate commits on it. Core/ is NOT
+        # excluded here: it holds this fixture's hand-written app code
+        # (main.c, app_threadx.c, ...), which IS meant to be linted --
+        # misra/exclude-paths.txt already filters the CubeMX-generated
+        # files within Core/ (hal_msp.c, _it.c, syscalls.c, ...) for both
+        # this hook and direct ./scripts/lint.sh|format.sh invocation.
+        exclude: ^(demo|Drivers|Middlewares)/
       - id: misra-lint
         name: MISRA lint (cppcheck MISRA C + clang-tidy best-effort C++)
         entry: scripts/lint.sh
         language: system
         files: \.(c|h|cpp|hpp)$
-        exclude: ^(demo|threadx-example)/
+        exclude: ^(demo|Drivers|Middlewares)/
+        # pre-commit parallelizes hook invocations across files by default
+        # (xargs -P, batched by CPU count) -- fine for clang-format (each
+        # file is independent) but breaks cppcheck's own cross-file
+        # whole-program analysis (unusedFunction, misra-c2012-2.5 on
+        # shared headers, ...): a function/macro only used from a
+        # DIFFERENT staged file looks unused when that file lands in a
+        # different parallel batch. require_serial forces one invocation
+        # with every matched file together, matching what lint.sh already
+        # assumes ("pre-commit's per-staged-file invocation" in its own
+        # comments means "all staged files in one call", not "one call
+        # per file").
+        require_serial: true
