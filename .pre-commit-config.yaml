@@ -16,3 +16,15 @@ repos:
         language: system
         files: \.(c|h|cpp|hpp)$
         exclude: ^demo/
+        # pre-commit parallelizes hook invocations across files by default
+        # (xargs -P, batched by CPU count) -- fine for clang-format (each
+        # file is independent) but breaks cppcheck's own cross-file
+        # whole-program analysis (unusedFunction, misra-c2012-2.5 on
+        # shared headers, ...): a function/macro only used from a
+        # DIFFERENT staged file looks unused when that file lands in a
+        # different parallel batch. require_serial forces one invocation
+        # with every matched file together, matching what lint.sh already
+        # assumes ("pre-commit's per-staged-file invocation" in its own
+        # comments means "all staged files in one call", not "one call
+        # per file").
+        require_serial: true
