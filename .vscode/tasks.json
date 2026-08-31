@@ -105,7 +105,7 @@
         {
             "id": "cubeideProjectDir",
             "type": "promptString",
-            "description": "Path to the STM32CubeIDE project directory"
+            "description": "CubeIDE project dir, or CMake source dir (e.g. '.')"
         }
     ]
 }

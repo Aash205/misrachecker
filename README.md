@@ -26,7 +26,7 @@ adds linting, formatting, and pre-commit checks in VSCode, the terminal, and CI.
 ```bash
 ./scripts/install.sh /path/to/your-firmware-repo
 cd /path/to/your-firmware-repo && ./scripts/setup.sh
-./scripts/gen_compile_commands.sh <cubeide-project-dir>   # once, and after CubeMX regen
+./scripts/gen_compile_commands.sh <cubeide-project-dir | cmake-source-dir>   # once, and after CubeMX regen
 ```
 
 ## Try it here
