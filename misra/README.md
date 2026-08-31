@@ -47,6 +47,11 @@ addon. Everything else (exclusions, demo self-test) stays the same.
   fallback for old STM32CubeIDE versions without the native `compile_commands.json` export
   checkbox. Install it yourself (`apt`/`brew`) only if `gen_compile_commands.sh` reports no
   native export was found.
+- STM32Cube VS Code extension (CMake) projects: `gen_compile_commands.sh` finds
+  `build/<preset>/compile_commands.json` too (CubeMX's CMake toolchain defaults to
+  `binaryDir: "${sourceDir}/build/${presetName}"`, two levels down — not the one level
+  CubeIDE's managed-build export uses). Just run the CMake configure step once (any preset)
+  before running `gen_compile_commands.sh`; no `bear`/CubeIDE needed for this path at all.
 - Windows + WSL both installed: `.vscode/tasks.json`'s Windows overrides run
   `scripts/git-bash-resolve.cmd` rather than bare `bash` — if PATH resolves `bash` to WSL's
   launcher instead of Git Bash (common when both are present), a task looks like it's running
