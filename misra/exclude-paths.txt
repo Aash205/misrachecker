@@ -6,6 +6,15 @@
 */CMSIS/*
 */Middlewares/*
 
+# ARM cross-toolchain's own system headers (newlib libc, GCC builtins,
+# libstdc++) -- reached when gen_compile_flags.sh finds a real
+# arm-none-eabi-g++ on PATH and cppcheck actually resolves its -isystem
+# paths (verified: without a real cross-compiler on PATH, compile_flags.txt
+# only carries -mcpu/-mthumb and these paths never resolve, so this was
+# never a live risk until that fallback started finding a real toolchain).
+# Not our code, not even ST's -- upstream newlib/GCC, never hand-edited.
+*/arm-none-eabi/*
+
 # CubeIDE-generated runtime stubs living directly under Core/Src (not caught
 # by the Drivers/CMSIS/Middlewares globs above since they sit next to
 # hand-written project code) -- weak POSIX hooks (_sbrk, _write, _kill, ...)
