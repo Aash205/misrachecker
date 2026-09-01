@@ -105,7 +105,8 @@
         {
             "id": "cubeideProjectDir",
             "type": "promptString",
-            "description": "CubeIDE project dir, or CMake source dir (e.g. '.')"
+            "description": "Project dir to scan (almost always repo root)",
+            "default": "."
         }
     ]
 }
