@@ -69,14 +69,3 @@
 */Release/*
 */.metadata/*
 */node_modules/*
-
-# demo/ holds deliberate MISRA violations for the self-test walkthrough
-# (see README) -- never gate commits/CI on them. The misra-lint pre-commit
-# hook also excludes demo/ via its own `exclude:` regex, but that only
-# stops demo/ files from being passed as argv; since the hook runs with
-# pass_filenames: false (cross-TU correctness needs the whole target
-# scanned together, not just staged files) and lint.sh's own whole-repo
-# scan doesn't know about pre-commit's regex, this pattern is what
-# actually keeps demo/ out of that scan. Run `./scripts/lint.sh demo` /
-# `./scripts/format.sh check demo` directly to see its findings.
-*/demo/*
