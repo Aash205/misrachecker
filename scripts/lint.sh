@@ -401,8 +401,18 @@ PY
     # Fix: reuse the same glob patterns as cppcheck suppressions (errorId
     # '*' wildcard = any finding) so vendor headers are silent regardless of
     # how they're reached, not just when passed directly as a target.
+    # Strip blank/comment lines ourselves rather than trusting cppcheck's own
+    # --suppressions-list parser to skip them -- verified against a real CI
+    # run: an older cppcheck (Ubuntu apt package) doesn't accept '#' comments
+    # in this file the way this dev machine's newer one does, and aborts
+    # entirely with "Failed to add suppression. No id." on the first comment
+    # line instead of just ignoring it.
     combined_suppressions="$(mktemp)"
-    cp "$SUPPRESSIONS_FILE" "$combined_suppressions"
+    : > "$combined_suppressions"
+    while IFS= read -r line; do
+        [[ -z "$line" || "$line" == \#* ]] && continue
+        printf '%s\n' "$line" >> "$combined_suppressions"
+    done < "$SUPPRESSIONS_FILE"
     while IFS= read -r pattern; do
         [[ -z "$pattern" || "$pattern" == \#* ]] && continue
         printf '*:%s\n' "$pattern" >> "$combined_suppressions"
