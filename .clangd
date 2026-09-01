@@ -1,2 +1,4 @@
 Diagnostics:
-  Suppress: "*"
+  Suppress: '*'
+CompileFlags:
+  CompilationDatabase: build/Release
