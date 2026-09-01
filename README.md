@@ -23,7 +23,7 @@ serial on any error.
 
 ## Path A — STM32CubeIDE
 
-1. File → Open Projects from File System → `STM32CubeIDE/`
+1. File → Open Projects from File System → this repo's root (`.project`/`.cproject` live there)
 2. Build
 3. Project Properties → C/C++ Build → Settings → check "Generate compile_commands.json" →
    rebuild
