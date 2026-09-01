@@ -31,14 +31,14 @@
 	</natures>
 	<linkedResources>
 		<link>
-			<name>STM32L4R5ZITX_FLASH.ld</name>
+			<name>STM32L496ZGTXP_FLASH.ld</name>
 			<type>1</type>
-			<locationURI>PROJECT_LOC/Core/Startup/STM32L4R5ZITX_FLASH.ld</locationURI>
+			<locationURI>PROJECT_LOC/Core/Startup/STM32L496ZGTXP_FLASH.ld</locationURI>
 		</link>
 		<link>
-			<name>Application/Startup/startup_stm32l4r5zitx.s</name>
+			<name>Application/Startup/startup_stm32l496zgtxp.s</name>
 			<type>1</type>
-			<locationURI>PROJECT_LOC/Core/Startup/startup_stm32l4r5zitx.s</locationURI>
+			<locationURI>PROJECT_LOC/Core/Startup/startup_stm32l496zgtxp.s</locationURI>
 		</link>
 		<link>
 			<name>Application/User/syscalls.c</name>

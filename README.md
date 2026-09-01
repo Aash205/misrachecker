@@ -12,7 +12,7 @@ changes on the fly. `LED_GREEN` toggles every 500ms (5s), then every 200ms (5s),
 settles to toggling every 1s forever. `LED_RED` toggles every 1s and an error message prints over
 serial on any error.
 
-- Board: NUCLEO-L4R5ZI (STM32L4R5xx)
+- Board: NUCLEO-L496ZG-P (STM32L496xx)
 - Serial: LPUART1, 115200 8N1, no flow control
 
 ## Setup (one shot — Linux, macOS, or Windows via Git Bash)

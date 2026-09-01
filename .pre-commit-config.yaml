@@ -36,3 +36,16 @@ repos:
         # comments means "all staged files in one call", not "one call
         # per file").
         require_serial: true
+        # Even with require_serial, pre-commit only passes STAGED files as
+        # args -- a commit that touches main.c but leaves app_threadx.c
+        # untouched still cross-references Error_Handler/app_threadx.h
+        # macros defined or used there, and cppcheck sees only main.c,
+        # producing the exact same false "unused" positives require_serial
+        # was meant to fix. lint.sh already has a zero-arg mode that scans
+        # the whole repo root (respecting misra/exclude-paths.txt) instead
+        # of just its argv -- pass_filenames: false makes pre-commit use
+        # that path unconditionally once `files`/`exclude` above decide the
+        # hook should run at all, trading a bit of commit-time speed for
+        # cross-TU correctness (verified: `pre-commit run --all-files`
+        # already always used this same full-scan path and was clean).
+        pass_filenames: false

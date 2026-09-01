@@ -92,8 +92,8 @@ misra-c2012-8.7:Core/Src/app_azure_rtos.c:79
 # HAL_TIM_IRQHandler there -- same "caller lives in excluded vendor code"
 # situation as above. Must stay external for the weak-symbol override to
 # link.
-unusedFunction:Core/Src/main.c:305
-misra-c2012-8.7:Core/Src/main.c:305
+unusedFunction:Core/Src/main.c:291
+misra-c2012-8.7:Core/Src/main.c:291
 
 # __io_putchar is called by syscalls.c's _write() (`extern int
 # __io_putchar(int ch) __attribute__((weak));`), which newlib's printf
@@ -101,7 +101,7 @@ misra-c2012-8.7:Core/Src/main.c:305
 # (cppcheck's own unusedFunction check doesn't fire on it once the extern
 # declaration above is visible, unlike the two entries above -- only
 # misra-c2012-8.7 needs suppressing here.)
-misra-c2012-8.7:Core/Src/main.c:283
+misra-c2012-8.7:Core/Src/main.c:269
 
 # MainThread_Entry is deliberately declared in app_threadx.h's public API
 # (ST's own design, alongside App_ThreadX_Init/MX_ThreadX_Init) even
@@ -118,4 +118,4 @@ staticFunction:Core/Src/app_threadx.c:134
 # pointer parameter's constness is part of a C function's type, so adding
 # const here would make this a different, non-overriding function
 # (real prototype mismatch, not just a style nit).
-constParameterPointer:Core/Src/main.c:305
+constParameterPointer:Core/Src/main.c:291

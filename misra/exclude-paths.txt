@@ -2,8 +2,13 @@
 # lint engines. Vendor/generated code is never hand-edited, so linting it
 # just adds noise and false "violations" in code we don't control.
 */generated/*
-*/Drivers/*HAL_Driver/*
-*/CMSIS/*
+# All of Drivers/ is vendor (HAL_Driver, CMSIS, and any BSP layer CubeMX
+# drops in there, e.g. Drivers/BSP/STM32L4xx_Nucleo_144/ -- pulled in whole,
+# never linked into .project, never hand-edited). A prior narrower pattern
+# (*/Drivers/*HAL_Driver/* + */CMSIS/*) missed BSP entirely; broadened to
+# match what .pre-commit-config.yaml and the README already document
+# Drivers/ as: vendor, full stop.
+*/Drivers/*
 */Middlewares/*
 
 # ARM cross-toolchain's own system headers (newlib libc, GCC builtins,
@@ -64,3 +69,14 @@
 */Release/*
 */.metadata/*
 */node_modules/*
+
+# demo/ holds deliberate MISRA violations for the self-test walkthrough
+# (see README) -- never gate commits/CI on them. The misra-lint pre-commit
+# hook also excludes demo/ via its own `exclude:` regex, but that only
+# stops demo/ files from being passed as argv; since the hook runs with
+# pass_filenames: false (cross-TU correctness needs the whole target
+# scanned together, not just staged files) and lint.sh's own whole-repo
+# scan doesn't know about pre-commit's regex, this pattern is what
+# actually keeps demo/ out of that scan. Run `./scripts/lint.sh demo` /
+# `./scripts/format.sh check demo` directly to see its findings.
+*/demo/*
