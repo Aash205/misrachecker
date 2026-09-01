@@ -14,7 +14,16 @@ jobs:
       - name: Install tools
         run: |
           sudo apt-get update
-          sudo apt-get install -y cppcheck clang-tidy clang-format
+          sudo apt-get install -y clang-tidy clang-format
+
+      - name: Build and install cppcheck 2.21.0 (pinned -- Ubuntu's apt package is
+          older and mishandles '#' comments in --suppressions-list files)
+        run: |
+          git clone --depth 1 --recurse-submodules --branch 2.21.0 https://github.com/danmar/cppcheck.git /tmp/cppcheck-src
+          cmake -S /tmp/cppcheck-src -B /tmp/cppcheck-build -DCMAKE_BUILD_TYPE=Release
+          cmake --build /tmp/cppcheck-build -j"$(nproc)"
+          sudo cmake --install /tmp/cppcheck-build
+          cppcheck --version
 
       - name: Make scripts executable
         run: chmod +x scripts/*.sh
