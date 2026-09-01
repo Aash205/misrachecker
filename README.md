@@ -12,7 +12,8 @@ changes on the fly. `LED_GREEN` toggles every 500ms (5s), then every 200ms (5s),
 settles to toggling every 1s forever. `LED_RED` toggles every 1s and an error message prints over
 serial on any error.
 
-- Board: NUCLEO-L496ZG-P (STM32L496xx)
+- Board: NUCLEO-L496ZG-P (STM32L496xx) — retargeted from ST's stock L4R5 demo to match a real
+  L496-based project's MCU
 - Serial: LPUART1, 115200 8N1, no flow control
 
 ## Setup (one shot — Linux, macOS, or Windows via Git Bash)
@@ -40,9 +41,12 @@ C/C++ Build → Settings → **Build Steps** tab → Post-build steps command:
 
 ## Path B — VS Code + STM32Cube extension (CMake)
 
+`CMakeLists.txt`/`CMakePresets.json` are already checked in (regenerate via the STM32Cube
+extension only if you change `Tx_Thread_Creation.ioc`).
+
 1. Install recommended extensions (`.vscode/extensions.json`)
-2. Import `Tx_Thread_Creation.ioc` via the STM32Cube extension, pick **CMake** as the toolchain
-3. Run the CMake configure step
+2. Open this folder in VS Code
+3. `cmake --preset Debug && cmake --build build/Debug` (or CMake Tools: Configure/Build)
 4. `./scripts/gen_compile_commands.sh .`
 
 ## Lint / format
