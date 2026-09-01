@@ -151,7 +151,19 @@ if [ "${1:-}" = "--cubeide" ]; then
 fi
 
 if [ "$#" -eq 0 ]; then
-    targets=("$REPO_ROOT")
+    # demo/ holds deliberate violations for the self-test walkthrough
+    # (README: `./scripts/lint.sh demo`) -- excluded here, not via
+    # misra/exclude-paths.txt, because is_excluded() would apply to an
+    # explicit `demo` target too and silently hide that walkthrough's own
+    # findings. Skipping it only from this implicit whole-repo default
+    # keeps pre-commit's pass_filenames: false scan (which relies on this
+    # default) from tripping over demo/'s intentional noise, while
+    # `./scripts/lint.sh demo` still shows it directly.
+    targets=()
+    while IFS= read -r -d '' entry; do
+        [ "$(basename "$entry")" = "demo" ] && continue
+        targets+=("$entry")
+    done < <(find "$REPO_ROOT" -mindepth 1 -maxdepth 1 -print0)
 else
     targets=("$@")
 fi

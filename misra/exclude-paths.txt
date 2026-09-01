@@ -2,8 +2,13 @@
 # lint engines. Vendor/generated code is never hand-edited, so linting it
 # just adds noise and false "violations" in code we don't control.
 */generated/*
-*/Drivers/*HAL_Driver/*
-*/CMSIS/*
+# All of Drivers/ is vendor (HAL_Driver, CMSIS, and any BSP layer CubeMX
+# drops in there, e.g. Drivers/BSP/<board>/ -- pulled in whole, never
+# hand-edited). A prior narrower pattern (*/Drivers/*HAL_Driver/* +
+# */CMSIS/*) missed BSP entirely; broadened to match what
+# .pre-commit-config.yaml and the README already document Drivers/ as:
+# vendor, full stop.
+*/Drivers/*
 */Middlewares/*
 
 # ARM cross-toolchain's own system headers (newlib libc, GCC builtins,
