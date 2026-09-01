@@ -3,7 +3,7 @@ name: MISRA lint
 on:
   pull_request:
   push:
-    branches: [master]
+    branches: [threadx-example-fixture]
 
 jobs:
   lint:
@@ -14,13 +14,16 @@ jobs:
       - name: Install tools
         run: |
           sudo apt-get update
-          sudo apt-get install -y cppcheck clang-tidy clang-format
+          sudo apt-get install -y cppcheck clang-tidy clang-format cmake ninja-build gcc-arm-none-eabi
 
       - name: Make scripts executable
         run: chmod +x scripts/*.sh
 
-      - name: Generate compile_flags.txt
-        run: ./scripts/gen_compile_flags.sh
+      - name: Build (real compile_commands.json, not the compile_flags.txt fallback)
+        run: |
+          cmake --preset Debug
+          cmake --build build/Debug
+          ./scripts/gen_compile_commands.sh .
 
       - name: Install uv and pre-commit
         run: |
