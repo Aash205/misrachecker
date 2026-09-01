@@ -10,7 +10,7 @@ adds linting, formatting, and pre-commit checks in VSCode, the terminal, and CI.
 
 - Real MISRA C:2012 (Cppcheck `misra.py`, free) on hand-written `.c`/`.h`
 - Best-effort MISRA-C++-flavored linting (clang-tidy, **not certified**) on hand-written `.cpp`/`.hpp`
-- clang-format (Allman, 4-space) + pre-commit hooks that auto-format and lint staged files
+- clang-format (Allman, 4-space) + pre-commit hooks: auto-format staged files, lint the whole tree (needed for cross-file MISRA correctness)
 - Vendor/generated code (`generated/`, HAL, CMSIS, Middlewares) fully excluded
 - VSCode integration (clangd + Cppcheck extensions) and lint-only CI
 - Windows via Git Bash (ships with Git for Windows)
