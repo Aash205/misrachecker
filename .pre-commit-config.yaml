@@ -6,9 +6,6 @@ repos:
         entry: scripts/format.sh fix
         language: system
         files: \.(c|h|cpp|hpp)$
-        # demo/ fixtures are deliberate violations for the self-test walkthrough
-        # (see README) -- never gate commits/CI on them. Run `./scripts/lint.sh
-        # demo` / `./scripts/format.sh check demo` directly to see them.
         # Drivers/ and Middlewares/ are vendor libraries (STMicroelectronics'
         # x-cube-azrtos-l4: HAL, CMSIS, ThreadX kernel) pulled in whole at
         # repo root -- not our code, don't gate commits on it. Core/ is NOT
@@ -17,13 +14,13 @@ repos:
         # misra/exclude-paths.txt already filters the CubeMX-generated
         # files within Core/ (hal_msp.c, _it.c, syscalls.c, ...) for both
         # this hook and direct ./scripts/lint.sh|format.sh invocation.
-        exclude: ^(demo|Drivers|Middlewares)/
+        exclude: ^(Drivers|Middlewares)/
       - id: misra-lint
         name: MISRA lint (cppcheck MISRA C + clang-tidy best-effort C++)
         entry: scripts/lint.sh
         language: system
         files: \.(c|h|cpp|hpp)$
-        exclude: ^(demo|Drivers|Middlewares)/
+        exclude: ^(Drivers|Middlewares)/
         # pre-commit parallelizes hook invocations across files by default
         # (xargs -P, batched by CPU count) -- fine for clang-format (each
         # file is independent) but breaks cppcheck's own cross-file

@@ -19,7 +19,7 @@ needed for the tools to run.
 ## Before an audit
 
 Buy Cppcheck Premium, swap the clang-tidy pass in `scripts/lint.sh` for its real MISRA C++
-addon. Everything else (exclusions, demo self-test) stays the same.
+addon. Everything else (exclusions) stays the same.
 
 ## Notes
 
@@ -39,7 +39,7 @@ addon. Everything else (exclusions, demo self-test) stays the same.
   `Motor_stspin250_control_on` vs CubeMX's `htim3`/`HAL_GPIO_WritePin`), so no single naming
   policy fits without constant false flags against generated code. In hand-written code, match
   the surrounding ST/HAL convention (capitalized module prefix + snake_case tail for functions,
-  PascalCase params, `UPPER_SNAKE` macros) rather than the demo/ fixtures' plain snake_case.
+  PascalCase params, `UPPER_SNAKE` macros).
 - Pre-commit: `../.pre-commit-config.yaml` auto-formats + lints staged files; set up via
   `scripts/setup.sh` (bootstraps `pre-commit` via `uv` or `pip`).
 - Windows: needs Git Bash.
