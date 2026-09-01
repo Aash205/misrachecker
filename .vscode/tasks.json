@@ -105,7 +105,8 @@
         {
             "id": "cubeideProjectDir",
             "type": "promptString",
-            "description": "Project dir: 'STM32CubeIDE' (Path A) or '.' (Path B, CMake)"
+            "description": "Project dir to scan (almost always repo root)",
+            "default": "."
         }
     ]
 }

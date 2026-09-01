@@ -27,7 +27,7 @@ serial on any error.
 2. Build
 3. Project Properties → C/C++ Build → Settings → check "Generate compile_commands.json" →
    rebuild
-4. `./scripts/gen_compile_commands.sh STM32CubeIDE`
+4. `./scripts/gen_compile_commands.sh .`
 
 To also see findings in STM32CubeIDE's own Problems view (no plugin): Project Properties →
 C/C++ Build → Settings → **Build Steps** tab → Post-build steps command:
