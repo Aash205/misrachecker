@@ -11,12 +11,12 @@ case "$(uname -s)" in
     Linux*)
         echo "Installing tools via apt..."
         sudo apt-get update
-        sudo apt-get install -y cppcheck clang-tidy clang-format
+        sudo apt-get install -y cppcheck clang-tidy clang-format cmake ninja-build
         install_uv_if_missing
         ;;
     Darwin*)
         echo "Installing tools via brew..."
-        brew install cppcheck llvm
+        brew install cppcheck llvm cmake ninja
         install_uv_if_missing
         ;;
     MINGW* | MSYS* | CYGWIN*)
@@ -34,6 +34,8 @@ case "$(uname -s)" in
         # either (check-tools.sh at the end reports anything still missing).
         command -v cppcheck >/dev/null 2>&1 || winget install --id Cppcheck.Cppcheck -e --accept-source-agreements --accept-package-agreements || true
         command -v clang-tidy >/dev/null 2>&1 || winget install --id LLVM.LLVM -e --accept-source-agreements --accept-package-agreements || true
+        command -v cmake >/dev/null 2>&1 || winget install --id Kitware.CMake -e --accept-source-agreements --accept-package-agreements || true
+        command -v ninja >/dev/null 2>&1 || winget install --id Ninja-build.Ninja -e --accept-source-agreements --accept-package-agreements || true
         command -v uv >/dev/null 2>&1 || winget install --id astral-sh.uv -e --accept-source-agreements --accept-package-agreements || true
         ;;
     *)

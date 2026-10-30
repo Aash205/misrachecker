@@ -23,6 +23,12 @@ addon. Everything else (exclusions, demo self-test) stays the same.
 
 ## Notes
 
+- **`scripts/lint.sh` needs CMake, Ninja and the ARM toolchain (`arm-none-eabi-gcc`).** The
+  MISRA pass reads the real `-I`/`-D` flags from `compile_commands.json` at the project root,
+  and `lint.sh` (re)generates it with `scripts/gen_compile_db.sh` (`cmake --preset Debug`, no
+  build) when it is missing, empty, or older than the CMake files. If generation fails it
+  exits 2 (tool error), never a silent include-blind run. This applies to every invocation,
+  including `lint.sh demo` and pre-commit on a fresh clone.
 - Cppcheck platform: `arm32-wchar_t4.xml` (bundled, cppcheck's own upstream ARM definition)
   — 32-bit int/long/pointer, **unsigned-by-default char** (real ARM EABI behavior, verified
   against arm-none-eabi-gcc's own `__CHAR_UNSIGNED__`/`__SIZEOF_WCHAR_T__` macros). Without
@@ -30,6 +36,9 @@ addon. Everything else (exclusions, demo self-test) stays the same.
   bugs (e.g. shift-overflow that's fine on a 64-bit host `long` but UB on a 32-bit one) and
   misjudge signedness-sensitive MISRA checks.
 - Excluded dirs: `exclude-paths.txt` — vendor/generated code, skipped by every engine.
+- `user-code-paths.txt`: CubeMX-generated files whose USER CODE BEGIN/END regions are linted. `lint.sh`
+  suppresses every other line of them at run time from the markers, so no line number is kept by hand.
+- `suppressions.txt`: reviewed, path-scoped deviations, each with its reason beside it.
 - Formatting: `scripts/format.sh check|fix [target...]` (clang-format, Allman, 4-space, CRLF
   line endings). Trailing comments use `///` and are column-aligned (clang-format's
   `AlignTrailingComments`, on by default) — matches firmware team's existing template style.
@@ -81,9 +90,9 @@ addon. Everything else (exclusions, demo self-test) stays the same.
   language server after this changes (Command Palette → `clangd: Restart language server`).
 - `compile_flags.txt` is generated, not shipped (`scripts/gen_compile_flags.sh`, called by
   `setup.sh`) — gitignored, since the correct paths depend on this exact machine's ARM
-  toolchain version/location. It's the fallback used before you've run
-  `gen_compile_commands.sh` against a real project (or for any file that isn't in that
-  project's build). If `arm-none-eabi-g++` is on PATH, it queries GCC directly for its real
+  toolchain version/location. It is used by clangd/clang-tidy for files that aren't in the
+  project's build database. `lint.sh` no longer falls back to it for the cppcheck MISRA pass
+  (that pass always uses `compile_commands.json`, see above). If `arm-none-eabi-g++` is on PATH, it queries GCC directly for its real
   system-include paths (the C++ standard library lives in a CPU/FPU-specific multilib
   subdirectory clang can't guess); if not found, you get CPU/target flags only and standard
   headers (`<cstdint>` etc.) won't resolve until either a standalone ARM toolchain is on
@@ -94,6 +103,8 @@ addon. Everything else (exclusions, demo self-test) stays the same.
   commonly assumed precedence. `gen_compile_commands.sh` deletes `compile_flags.txt` once it
   writes a real `compile_commands.json`, so this never comes up in normal use; it only
   matters if you're debugging why lint results don't seem to reflect the real project.
+  `lint.sh` sidesteps it for clang-tidy by passing `-p build/Debug` (a directory that never
+  holds a `compile_flags.txt`), so the C++ pass sees the real include paths.
 - CubeIDE's native `compile_commands.json` export sets `"directory"` to the project root, but
   every `-I` flag in `"command"` is relative and was written assuming cwd = the build-config
   dir (`Debug/`) one level below root — that's where the compiler actually ran from.

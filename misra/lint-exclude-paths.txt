@@ -1,0 +1,8 @@
+# Paths excluded from the MISRA / clang-tidy pass only. They are still checked by format.sh.
+# Same glob syntax as exclude-paths.txt, matched against the project-relative path.
+
+# Unit tests are not product code. MISRA C:2012 targets the delivered firmware; Unity's test
+# style (void test_x(void) functions registered with RUN_TEST, TEST_ASSERT_* macros) produces
+# findings by design (rules 8.4, 8.7, 20.x) that would only be suppressed wholesale. Measured on
+# the first two test files: about 60 findings in the test code itself.
+*/Tests/*

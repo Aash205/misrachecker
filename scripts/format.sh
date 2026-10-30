@@ -6,6 +6,8 @@ REPO_ROOT="$(cd "$SCRIPT_DIR/.." && pwd)"
 MISRA_DIR="$REPO_ROOT/misra"
 
 EXCLUDE_FILE="$MISRA_DIR/exclude-paths.txt"
+# CubeMX-generated files whose USER CODE regions are linted: CubeMX owns their formatting.
+USER_CODE_FILE="$MISRA_DIR/user-code-paths.txt"
 
 MODE="${1:?usage: format.sh <check|fix> [target...]}"
 shift || true
@@ -18,6 +20,14 @@ fi
 
 is_excluded() {
     local path="$1"
+    # Match against the project-relative path ("/Tests/vendor/..."), so a relative target given
+    # from the project directory is judged the same as the absolute path from a whole-repo
+    # scan, and a parent directory that happens to be named "Tests" or "build" cannot exclude
+    # the whole project. Paths outside the project (toolchain headers) stay absolute.
+    path="$(realpath -m -- "$path" 2>/dev/null || printf '%s' "$path")"
+    case "$path" in
+        "$REPO_ROOT"/*) path="/${path#"$REPO_ROOT"/}" ;;
+    esac
     while IFS= read -r pattern; do
         [[ -z "$pattern" || "$pattern" == \#* ]] && continue
         # shellcheck disable=SC2053
@@ -25,6 +35,12 @@ is_excluded() {
             return 0
         fi
     done < "$EXCLUDE_FILE"
+    while IFS= read -r pattern; do
+        [[ -z "$pattern" || "$pattern" == \#* ]] && continue
+        if [[ "$path" == "/$pattern" ]]; then
+            return 0
+        fi
+    done < "$USER_CODE_FILE"
     return 1
 }
 

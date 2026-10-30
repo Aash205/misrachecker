@@ -28,7 +28,6 @@ fi
 pre-commit install
 
 echo "Pre-commit hooks installed."
-echo "Every commit will now auto-format staged C/C++ files (clang-format)"
-echo "and run MISRA lint (cppcheck MISRA C + clang-tidy best-effort C++)"
-echo "against staged files only. A formatting fix blocks that commit once"
-echo "(re-stage and commit again) -- standard pre-commit behavior."
+echo "Every commit will check staged C/C++ formatting, run the MISRA lint scan,"
+echo "and build and run the host unit tests. Use the Format fix task to correct"
+echo "formatting failures before committing."

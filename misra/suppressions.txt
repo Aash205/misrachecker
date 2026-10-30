@@ -4,3 +4,33 @@
 #
 # Example:
 # misra-c2012-15.1:src/legacy_bridge.c:42
+#
+# Prefer an inline "/* cppcheck-suppress [id] -- reason */" comment above the flagged line
+# over an entry here: line-number entries break on every edit.
+
+# App/hw: three whole-program checks are judged one translation unit at a time, and much of the
+# hardware glue is called from files that are not lint targets (the USBX and TouchGFX sources, the
+# HAL's weak callback hooks) or by nothing yet (ten display-driver functions kept as a library API:
+# reset, rotation, sleep, window, status and diagnostics accessors). So 'never used', 'could be
+# static' and 'external linkage but referenced once' are not reliable there. Every other rule
+# applies, and each deviation is an inline cppcheck-suppress with a reason.
+unusedFunction:*/App/hw/*
+misra-c2012-8.7:*/App/hw/*
+staticFunction:*/App/hw/*
+
+# Display driver: MISRA 15.5 is advisory. Its early returns are argument and HAL-error guards;
+# keeping them makes the failure paths direct and leaves the reviewed control flow unchanged.
+misra-c2012-15.5:*/App/hw/waveshare_driver/*
+
+# Configuration/vendor headers reached through includes are not lint targets.
+*:*custom_conf.h
+*:*custom_errno.h
+*:*tx_user.h
+
+# App/logic: the unit-tested API lands before its firmware callers (extraction steps 3 to 10), so
+# 'never used' (and 'could be static', for API only the unit tests call) is expected there. The rest
+# of the tree keeps these rules.
+unusedFunction:*/App/logic/*
+misra-c2012-8.7:*/App/logic/*
+unmatchedSuppression:*/App/logic/*
+staticFunction:*/App/logic/*

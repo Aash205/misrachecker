@@ -1,0 +1,7 @@
+# CubeMX-generated files whose hand-written parts sit between USER CODE BEGIN / END markers.
+# scripts/lint.sh checks only those regions: every other line of these files is suppressed at
+# lint time (generated from the markers, so no line numbers are kept by hand). Paths are relative
+# to the project root; the files must NOT also be listed in exclude-paths.txt.
+Core/Src/main.c
+Core/Src/stm32l4xx_it.c
+Core/Src/app_threadx.c

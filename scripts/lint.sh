@@ -6,7 +6,11 @@ REPO_ROOT="$(cd "$SCRIPT_DIR/.." && pwd)"
 MISRA_DIR="$REPO_ROOT/misra"
 
 EXCLUDE_FILE="$MISRA_DIR/exclude-paths.txt"
+# Excluded from the MISRA pass only (still format-checked): see the file for the reasons.
+LINT_EXCLUDE_FILE="$MISRA_DIR/lint-exclude-paths.txt"
 SUPPRESSIONS_FILE="$MISRA_DIR/suppressions.txt"
+# CubeMX-generated files of which only the USER CODE regions are linted (see the file).
+USER_CODE_FILE="$MISRA_DIR/user-code-paths.txt"
 CLANG_TIDY_CONFIG="$REPO_ROOT/.clang-tidy"
 CPPCHECK_PLATFORM="$MISRA_DIR/arm32-wchar_t4.xml"
 
@@ -52,11 +56,12 @@ download_misra_addon() {
     command -v curl >/dev/null 2>&1 || return 1
     mkdir -p "$dest_dir"
     if curl -fsSL "$base/misra.py" -o "$dest_dir/misra.py" 2>/dev/null \
-        && curl -fsSL "$base/misra_9.py" -o "$dest_dir/misra_9.py" 2>/dev/null; then
+        && curl -fsSL "$base/misra_9.py" -o "$dest_dir/misra_9.py" 2>/dev/null \
+        && curl -fsSL "$base/cppcheckdata.py" -o "$dest_dir/cppcheckdata.py" 2>/dev/null; then
         printf '%s' "$dest_dir/misra.py"
         return 0
     fi
-    rm -f "$dest_dir/misra.py" "$dest_dir/misra_9.py"
+    rm -f "$dest_dir/misra.py" "$dest_dir/misra_9.py" "$dest_dir/cppcheckdata.py"
     return 1
 }
 
@@ -150,6 +155,55 @@ if [ "${1:-}" = "--cubeide" ]; then
     shift
 fi
 
+# A missing or empty compile database makes cppcheck blind to every project include path,
+# which floods the report with false 8.4 / 17.3 findings; a stale one (older than the CMake
+# files that define the include paths and defines) silently lints the wrong flags. Regenerate
+# it in all three cases, or fail as a tool error.
+compile_db="$REPO_ROOT/compile_commands.json"
+compile_db_reason=""
+
+resolve_build_db_dir() {
+    local newest=""
+    local candidate
+    for candidate in "$REPO_ROOT"/build/*/compile_commands.json; do
+        [ -f "$candidate" ] || continue
+        if [ -z "$newest" ] || [ "$candidate" -nt "$newest" ]; then
+            newest="$candidate"
+        fi
+    done
+    if [ -n "$newest" ]; then
+        dirname "$newest"
+        return 0
+    fi
+    return 1
+}
+
+build_db_dir="$(resolve_build_db_dir || true)"
+if [ -n "$build_db_dir" ] && [ -f "$build_db_dir/compile_commands.json" ]; then
+    if [ ! -f "$compile_db" ] || [ "$build_db_dir/compile_commands.json" -nt "$compile_db" ]; then
+        cp "$build_db_dir/compile_commands.json" "$compile_db"
+    fi
+fi
+
+if [ ! -f "$compile_db" ] || [ -z "$build_db_dir" ]; then
+    compile_db_reason="missing"
+elif ! python3 -c 'import json, sys; sys.exit(0 if json.load(open(sys.argv[1])) else 1)' \
+        "$compile_db" 2>/dev/null; then
+    compile_db_reason="empty or unreadable"
+elif [ -n "$(find "$REPO_ROOT/CMakeLists.txt" "$REPO_ROOT/CMakePresets.json" "$REPO_ROOT/cmake" \
+        -type f \( -name 'CMakeLists.txt' -o -name 'CMakePresets.json' -o -name '*.cmake' \) \
+        -newer "$compile_db" -print -quit)" ]; then
+    compile_db_reason="older than the CMake files"
+fi
+if [ -n "$compile_db_reason" ]; then
+    echo "compile_commands.json $compile_db_reason -- regenerating it (scripts/gen_compile_db.sh)..." >&2
+    if ! bash "$SCRIPT_DIR/gen_compile_db.sh" >&2; then
+        echo "ERROR: could not generate compile_commands.json; lint results would be unreliable." >&2
+        exit 2
+    fi
+    build_db_dir="$(resolve_build_db_dir || true)"
+fi
+
 if [ "$#" -eq 0 ]; then
     # demo/ holds deliberate violations for the self-test walkthrough
     # (README: `./scripts/lint.sh demo`) -- excluded here, not via
@@ -178,13 +232,26 @@ config_error=0
 
 is_excluded() {
     local path="$1"
+    # find and explicit targets can yield native Windows paths, while the
+    # exclusion globs below are intentionally written with POSIX separators.
+    # Normalize before matching so vendor/generated paths stay excluded on
+    # Git Bash as well as on Unix.
+    path="${path//\\//}"
+    # Match against the project-relative path ("/Tests/vendor/..."), so a relative target given
+    # from the project directory is judged the same as the absolute path from a whole-repo
+    # scan, and a parent directory that happens to be named "Tests" or "build" cannot exclude
+    # the whole project. Paths outside the project (toolchain headers) stay absolute.
+    path="$(realpath -m -- "$path" 2>/dev/null || printf '%s' "$path")"
+    case "$path" in
+        "$REPO_ROOT"/*) path="/${path#"$REPO_ROOT"/}" ;;
+    esac
     while IFS= read -r pattern; do
         [[ -z "$pattern" || "$pattern" == \#* ]] && continue
         # shellcheck disable=SC2053
         if [[ "$path" == $pattern ]]; then
             return 0
         fi
-    done < "$EXCLUDE_FILE"
+    done < <(cat "$EXCLUDE_FILE" "$LINT_EXCLUDE_FILE")
     return 1
 }
 
@@ -235,8 +302,14 @@ collect_files() {
 echo "== MISRA C (cppcheck) =="
 c_files=()
 collect_files c_files c -- "${targets[@]}"
+# Absolute paths, so the path-scoped suppressions (*/App/hw/*) match a relative target as well.
+for i in "${!c_files[@]}"; do
+    c_files[i]="$(realpath -m -- "${c_files[i]}")"
+done
 
 if [ "${#c_files[@]}" -gt 0 ]; then
+    echo "linting ${#c_files[@]} C file(s):"
+    printf '  %s\n' "${c_files[@]#"$REPO_ROOT"/}"
     # --platform: STM32/Cortex-M is 32-bit with unsigned-by-default char
     # (ARM EABI), neither of which matches this dev machine's own type
     # sizes/signedness. Without this, cppcheck silently misses real bugs
@@ -278,9 +351,8 @@ if [ "${#c_files[@]}" -gt 0 ]; then
     # byte-for-byte identical to the database's own "file" entry -- a
     # project-loader quirk this toolchain has no visibility into and can't
     # fix from the outside. So: extract the real -I/-D flags ourselves
-    # (same technique as the compile_flags.txt fallback below) from one
-    # representative compile_commands.json entry and apply them to every
-    # target file in one plain invocation, same as compile_flags.txt.
+    # from one representative compile_commands.json entry and apply them to
+    # every target file in one plain invocation.
     # STM32CubeIDE projects use one global include/define set across all
     # project files (verified against a real export), so one entry's flags
     # generalize fine -- this sidesteps --project/--file-filter entirely
@@ -292,8 +364,7 @@ if [ "${#c_files[@]}" -gt 0 ]; then
         # flag ends up with a trailing '\r' that cppcheck receives as part
         # of the path (e.g. '-I.../Core/Inc\r'), which then reports as
         # "Couldn't find path" because the directory literally doesn't have
-        # a CR-suffixed name. Same CRLF hazard applies to compile_flags.txt
-        # further down (checked into the repo on Windows = CRLF endings).
+        # a CR-suffixed name.
         # Strip '\r' explicitly after every read rather than relying on
         # Python/git line-ending behavior we don't control here.
         while IFS= read -r flag; do
@@ -366,27 +437,6 @@ while i < len(tokens):
     i += 1
 PY
         )
-    elif [ -f "$REPO_ROOT/compile_flags.txt" ]; then
-        # compile_flags.txt fallback: cppcheck has no native concept of this
-        # file (unlike clang-tidy/clangd, which read it via -p). It also
-        # only tolerates -I<dir> and -D<ID> -- anything else in there
-        # (--target=, -mcpu=, -mthumb, ...) is a hard "unrecognized command
-        # line option" error for cppcheck, verified directly. So pull out
-        # just the include paths (-isystem <dir> pairs count as -I too;
-        # cppcheck doesn't distinguish system vs quote includes) and drop
-        # everything else rather than forwarding the file as-is.
-        prev_flag=""
-        while IFS= read -r flag; do
-            flag="${flag%$'\r'}"
-            case "$prev_flag" in
-                -isystem) extra_include_args+=("-I$flag") ;;
-            esac
-            case "$flag" in
-                -I*) extra_include_args+=("$flag") ;;
-                -D*) extra_include_args+=("$flag") ;;
-            esac
-            prev_flag="$flag"
-        done < "$REPO_ROOT/compile_flags.txt"
     fi
 
     # exclude-paths.txt only keeps a path out of the target-file list handed
@@ -416,7 +466,38 @@ PY
     while IFS= read -r pattern; do
         [[ -z "$pattern" || "$pattern" == \#* ]] && continue
         printf '*:%s\n' "$pattern" >> "$combined_suppressions"
-    done < "$EXCLUDE_FILE"
+    done < <(cat "$EXCLUDE_FILE" "$LINT_EXCLUDE_FILE")
+
+    # Files generated by CubeMX whose hand-written parts are USER CODE blocks: suppress every line
+    # outside a USER CODE BEGIN / END pair. The entries are produced here from the markers, so no
+    # line number is ever kept by hand and an edit cannot make them stale. Entries for lines
+    # without a finding are expected: unmatchedSuppression is hidden for these files only.
+    if [ -f "$USER_CODE_FILE" ]; then
+        python3 - "$REPO_ROOT" "$USER_CODE_FILE" "${c_files[@]}" >> "$combined_suppressions" <<'PY'
+import os, sys
+
+root, listing = sys.argv[1], sys.argv[2]
+targets = {os.path.normpath(os.path.abspath(p)): p for p in sys.argv[3:]}
+for entry in open(listing):
+    rel = entry.strip()
+    if not rel or rel.startswith("#"):
+        continue
+    path = os.path.normpath(os.path.join(root, rel))
+    if path not in targets:
+        continue
+    given = targets[path]
+    print("unmatchedSuppression:%s" % given)
+    inside = False
+    with open(path, errors="replace") as source:
+        for number, line in enumerate(source, 1):
+            if line.lstrip().startswith("/* USER CODE BEGIN"):
+                inside = True
+            elif line.lstrip().startswith("/* USER CODE END"):
+                inside = False
+            elif not inside:
+                print("*:%s:%d" % (given, number))
+PY
+    fi
 
     cppcheck_log="$(mktemp)"
     # set +e around the pipeline, not `|| true` after it: under pipefail, a
@@ -428,7 +509,7 @@ PY
     cppcheck --enable=all --inconclusive --addon="$MISRA_ADDON" "${ADDON_PYTHON_ARGS[@]}" \
         --platform="$CPPCHECK_PLATFORM" \
         --suppress=missingIncludeSystem --suppress=checkersReport \
-        --suppress=normalCheckLevelMaxBranches \
+        --suppress=normalCheckLevelMaxBranches --suppress=unmatchedSuppression \
         --error-exitcode=1 --suppressions-list="$combined_suppressions" \
         --inline-suppr "${template_args[@]}" "${extra_include_args[@]}" "${c_files[@]}" 2>&1 | tee "$cppcheck_log"
     cppcheck_rc="${PIPESTATUS[0]}"
@@ -441,9 +522,8 @@ PY
     # resolve_addon_python above), or misra.py's own "[misra-config]" tag
     # (emitted per-identifier as "Because of missing configuration, misra
     # checking is incomplete" whenever a project macro/type can't be
-    # resolved -- e.g. no real compile_commands.json yet, only the
-    # compile_flags.txt CPU/target-flags fallback, which never carries
-    # project -I paths). Findings from a run missing macro/type info aren't
+    # resolved -- e.g. a compile_commands.json without the project's -I
+    # paths or defines). Findings from a run missing macro/type info aren't
     # trustworthy (real violations can be silently missed, not just
     # over-reported), so this counts as the tool being unconfigured too,
     # same as the other patterns -- not a real MISRA finding to fix in code.
@@ -463,13 +543,17 @@ cpp_files=()
 collect_files cpp_files cpp hpp -- "${targets[@]}"
 
 if [ "${#cpp_files[@]}" -gt 0 ]; then
-    # -p "$REPO_ROOT" picks up compile_commands.json when a real firmware
-    # project has generated one, else falls back to compile_flags.txt
-    # (ARM/Cortex-M4 target) which this repo always ships.
+    # -p points at the build directory's own compile_commands.json, NOT the
+    # project root: clang-tidy prefers a compile_flags.txt over a
+    # compile_commands.json in the same directory (verified), and the root
+    # holds the generated compile_flags.txt (CPU flags only, no project -I
+    # paths), which makes every project header "not found".
     fix_args=()
     [ "$FIX" -eq 1 ] && fix_args=(--fix)
+    echo "linting ${#cpp_files[@]} C++ file(s):"
+    printf '  %s\n' "${cpp_files[@]#"$REPO_ROOT"/}"
     for f in "${cpp_files[@]}"; do
-        if ! clang-tidy --config-file="$CLANG_TIDY_CONFIG" -p "$REPO_ROOT" "${fix_args[@]}" "$f"; then
+        if ! clang-tidy --config-file="$CLANG_TIDY_CONFIG" -p "${build_db_dir:-$REPO_ROOT/build/Debug}" "${fix_args[@]}" "$f"; then
             status=1
         fi
     done
